@@ -4,25 +4,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <errno.h>
-
-#ifdef X_SYSTEM_WINDOWS
-#define WIN32_LEAN_AND_MEAN 
-#include <windows.h>
-#include <windef.h>
-#include <ws2def.h>
-#include <winsock2.h>
-    typedef SOCKET XelSocket;
-    #define XelInvalidSocket           (INVALID_SOCKET)
-    #define XelCloseSocket(sockfd)     closesocket((sockfd))
-#else
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <netinet/in.h>
-    typedef int XelSocket;
-    #define XelInvalidSocket           ((XelSocket) -1)
-    #define XelCloseSocket(sockfd)     close((sockfd))
-#endif
+#include "./X_IO.h"
 
 #define XelLinkHeaderSize          ((size_t)(32))
 #define XelLinkMagicMask           ((size_t)(0xFF000000))
