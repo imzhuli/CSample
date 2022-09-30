@@ -53,22 +53,12 @@ endif()
 
 #install
 install(
-	DIRECTORY ${PROJECT_SOURCE_DIR}/./include/X
+	DIRECTORY ${PROJECT_SOURCE_DIR}/./include/xel
 	DESTINATION include
 	FILES_MATCHING REGEX ".+\.(h|hpp)"
 	)
 install(
-	DIRECTORY ${PROJECT_SOURCE_DIR}/./include/X_ext
-	DESTINATION include
-	FILES_MATCHING REGEX ".+\.(h|hpp)"
-	)
-install(
-	DIRECTORY ${PROJECT_SOURCE_DIR}/./include/glm
-	DESTINATION include
-	FILES_MATCHING REGEX ".+\.(h|hpp|inc)"
-	)
-install(
-	DIRECTORY ${PROJECT_SOURCE_DIR}/./include/rapidjson
+	DIRECTORY ${PROJECT_SOURCE_DIR}/./include/xel_ext
 	DESTINATION include
 	FILES_MATCHING REGEX ".+\.(h|hpp)"
 	)
