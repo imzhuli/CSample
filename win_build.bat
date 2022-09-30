@@ -7,9 +7,9 @@ if /i "%1" == "release" set version=Release
 rd /S/Q .\build
 md .\logs
 
-md build\X
-cd build\X
-cmake -DCMAKE_TOOLCHAIN_FILE=%VCPKG_PATH% -DCMAKE_BUILD_TYPE=%version% -Wno-dev ../../CppSample
+md build
+cd build
+cmake -DCMAKE_TOOLCHAIN_FILE=%VCPKG_PATH% -DCMAKE_BUILD_TYPE=%version% -Wno-dev ../
 if "%errorlevel%" NEQ "0" goto :cmake_failed
 cmake --build . --config %version%
 if "%errorlevel%" NEQ "0" goto :build_failed
@@ -17,20 +17,6 @@ ctest.exe --force-new-ctest-process -C %version%
 if "%errorlevel%" NEQ "0" goto :test_failed
 cmake --install . --config %version%
 cd ..\..
-
-md build\engine\bin\%version%\
-cd build\engine
-copy ..\X\.local\bin\*.dll .\bin\%version%\
-cmake -DCMAKE_TOOLCHAIN_FILE=%VCPKG_PATH% -DCMAKE_BUILD_TYPE=%version% -Wno-dev ../../Engine
-if "%errorlevel%" NEQ "0" goto :cmake_failed
-cmake --build . --config %version%
-if "%errorlevel%" NEQ "0" goto :build_failed
-ctest.exe --force-new-ctest-process -C %version%
-if "%errorlevel%" NEQ "0" goto :test_failed
-rd /S/Q .\.local
-md .\.local\bin
-copy .\bin\%version%\* .\.local\bin\
-cd ..\.. 
 
 goto :end
 
