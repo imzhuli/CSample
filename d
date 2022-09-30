@@ -2,12 +2,12 @@
 
 set -e
 
-args=`getopt -o "c:" -l "sysroot:,c-complier:" -- "$@"`
+args=`getopt -o "c:" -l "sysroot:,c-compiler:" -- "$@"`
 eval set -- "$args"
 while :
 do 
     case "$1" in
-        -c|--c-complier)
+        -c|--c-compiler)
             ccompiler="$2";
             shift 2;;
         --sysroot)
