@@ -27,6 +27,7 @@ exit
 
 :cmake_failed
 echo cmake configuration error !
+cd ..
 goto :end
 
 
