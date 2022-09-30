@@ -16,25 +16,27 @@ if "%errorlevel%" NEQ "0" goto :build_failed
 ctest.exe --force-new-ctest-process -C %version%
 if "%errorlevel%" NEQ "0" goto :test_failed
 cmake --install . --config %version%
-cd ..\..
+cd ..
 
 goto :end
 
 REM Error Cases:
 :env_failed
 echo environment check failed, make sure VCPKG_PATH points to currect vcpkg path
-exit /B
+exit 
 
 :cmake_failed
 echo cmake configuration error !
 goto :end
 
-:test_failed
-echo Failed to pass test(s) !
-goto :end
 
 :build_failed
 echo Failed to build target(s) !
+cd ..
 goto :end
 
+:test_failed
+echo Failed to pass test(s) !
+cd ..
+goto :end
 :end
