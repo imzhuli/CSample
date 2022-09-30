@@ -24,12 +24,12 @@ X_CNAME_BEGIN
 
 typedef struct XelIoContext XelIoContext;
 struct XelIoContext {
-
+    unsigned char Reserved [16];
 };
 
 static inline void XIC_Init(XelIoContext * ContextPtr)
 {
-    XelIoContext InitValue = {};
+    XelIoContext InitValue = { .Reserved = {0}};
     *ContextPtr = InitValue;
 }
 
