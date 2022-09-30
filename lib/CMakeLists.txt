@@ -2,7 +2,7 @@ project(lib_${libname} C)
 
 # enable specific macors by system type:
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
-	set(PLATFORM_LIBRARIES)
+	set(PLATFORM_LIBRARIES wsock32 ws2_32)
 elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
 	set(PLATFORM_LIBRARIES)
 elseif (CMAKE_SYSTEM_NAME MATCHES "Darwin")

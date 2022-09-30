@@ -33,5 +33,4 @@ static inline void XIC_Init(XelIoContext * ContextPtr)
     *ContextPtr = InitValue;
 }
 
-
 X_CNAME_END
