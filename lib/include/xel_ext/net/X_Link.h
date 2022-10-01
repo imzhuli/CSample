@@ -1,5 +1,5 @@
 #pragma once
-#include <xel/X_Common.h>
+#include <xel/X_Base.h>
 #include <xel/X_Byte.h>
 #include <stdbool.h>
 #include <stdio.h>

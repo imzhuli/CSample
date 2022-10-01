@@ -1,4 +1,4 @@
-#include <xel/X_Common.h>
+#include <xel/X_Base.h>
 #include <xel/X_String.h>
 #include <xel/X_RBTree.h>
 

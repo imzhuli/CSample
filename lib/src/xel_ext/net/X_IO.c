@@ -1,5 +1,9 @@
 #include <xel_ext/net/X_IO.h>
 
+#if defined(X_SYSTEM_LINUX) ||defined(X_SYSTEM_MACOS) || defined(X_SYSTEM_IOS)
+#include <fcntl.h>
+#endif
+
 bool XIC_Init(XelIoContext * ContextPtr)
 {
     XelIoContext InitValue = { .EventPoller = XelInvalidEventPoller,  .Reserved = {0} };
@@ -36,3 +40,15 @@ void XIC_Clean(XelIoContext * ContextPtr)
     ContextPtr->EventPoller = XelInvalidEventPoller;
 }
 
+void XS_SetNonBlocking(XelSocket Sock)
+{
+    bool blocking = false;
+#if defined(X_SYSTEM_WINDOWS)
+    unsigned long mode = blocking ? 0 : 1;
+    ioctlsocket(Sock, FIONBIO, &mode);
+#else
+    int flags = fcntl(Sock, F_GETFL, 0);
+    flags = blocking ? (flags & ~O_NONBLOCK) : (flags | O_NONBLOCK);
+    fcntl(Sock, F_SETFL, flags);
+#endif
+}

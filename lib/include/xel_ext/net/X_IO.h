@@ -1,5 +1,5 @@
 #pragma once
-#include <xel/X_Common.h>
+#include <xel/X_Base.h>
 
 #if defined(X_SYSTEM_WINDOWS)
     #define WIN32_LEAN_AND_MEAN
@@ -46,5 +46,8 @@ struct XelIoContext {
 
 extern bool XIC_Init(XelIoContext * ContextPtr);
 extern void XIC_Clean(XelIoContext * ContextPtr);
+extern void XIC_LoopOnce(uint32_t TimeoutMS);
+
+extern void XS_SetNonBlocking(XelSocket Sock);
 
 X_CNAME_END

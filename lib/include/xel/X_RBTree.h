@@ -1,5 +1,5 @@
 #pragma once
-#include "./X_Common.h"
+#include "./X_Base.h"
 
 #ifdef __cplusplus
 extern "C" {
