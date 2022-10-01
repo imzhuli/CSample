@@ -1,8 +1,8 @@
 #pragma once
 #include <xel/X_Common.h>
 
-#ifdef X_SYSTEM_WINDOWS
-    #define WIN32_LEAN_AND_MEAN 
+#if defined(X_SYSTEM_WINDOWS)
+    #define WIN32_LEAN_AND_MEAN
     #include <windows.h>
     #include <windef.h>
     #include <ws2def.h>
@@ -12,22 +12,25 @@
         #define XelCloseSocket(sockfd)     closesocket((sockfd))
 #elif defined(X_SYSTEM_LINUX)
     #include <sys/epoll.h>
-        typedef int XelEventPoller;
+        typedef int XelEventPoller; // epoll
         #define XelInvalidEventPoller      ((XelEventPoller)-1)
     #include <sys/socket.h>
     #include <sys/types.h>
     #include <unistd.h>
     #include <netinet/in.h>
         typedef int XelSocket;
-        #define XelInvalidSocket           ((XelSocket) -1)
+        #define XelInvalidSocket           ((XelSocket)-1)
         #define XelCloseSocket(sockfd)     close((sockfd))
-#elif defined(X_SYSTEM_MACOS)
+#elif defined(X_SYSTEM_MACOS) || defined(X_SYSTEM_IOS)
+    #include <sys/event.h>
+        typedef int XelEventPoller; // kqueue
+        #define XelInvalidEventPoller      ((XelEventPoller)-1)
     #include <sys/socket.h>
     #include <sys/types.h>
     #include <unistd.h>
     #include <netinet/in.h>
         typedef int XelSocket;
-        #define XelInvalidSocket           ((XelSocket) -1)
+        #define XelInvalidSocket           ((XelSocket)-1)
         #define XelCloseSocket(sockfd)     close((sockfd))
 #else
     #error unsupported system type
