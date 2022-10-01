@@ -36,12 +36,12 @@ uint64_t X_GetTimestamp()
     return Internal_MicroTimestamp() * 1000000;
 }
 
-uint64_t X_GetMilliTimestamp()
+uint64_t X_GetTimestampMS()
 {
     return Internal_MicroTimestamp() * 1000;
 }
 
-uint64_t X_GetMicroTimestamp()
+uint64_t X_GetTimestampUS()
 {
     return Internal_MicroTimestamp();
 }
