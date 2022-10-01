@@ -48,21 +48,22 @@ do
 done
 
 if [ ! "$ccompiler" = "" ]; then
-    CMAKE_C_COMPILER="-DCMAKE_C_COMPILER=$ccompiler"
+    CMAKE_FLAGS+=("-DCMAKE_C_COMPILER=$ccompiler")
 fi
 if [ ! "$sysroot" = "" ]; then
     if [ ! -d "$sysroot" ]; then
         echo Failed to check sysroot directory
         exit
     fi
-    CMAKE_FLAGS__SYSROOT="-DCMAKE_SYSROOT=$sysroot"
+    CMAKE_FLAGS+=("-DCMAKE_SYSROOT=$sysroot")
 fi
+CMAKE_FLAGS+=("-DCMAKE_BUILD_TYPE=Debug")
 
 rm -rf ./build
 mkdir build
 
 cd build
-cmake $CMAKE_C_COMPILER $CMAKE_FLAGS__SYSROOT -DCMAKE_BUILD_TYPE=Debug -Wno-dev ../
+cmake "$CMAKE_FLAGS" -Wno-dev ../
 make -j ${cpu_num}
 make test
 cd ..
