@@ -1,8 +1,8 @@
-#!/bin/sh
+#!/bin/bash
 
 set -e
 
-if [ -d "/proc/cpuinfo" ]; then
+if [ -e "/proc/cpuinfo" ]; then
     cpu_num=`grep -c "model name" /proc/cpuinfo`
 else
     cpu_num=`sysctl -a | grep machdep.cpu.thread_count | sed "s/^.*\ //g"`
@@ -37,14 +37,15 @@ do
         args+=("$1")
         shift
     fi
-    unset OPTIND
+
+    OPTIND=0
 done
 
+echo "Extra parameters:"
 for arg in "${args[@]}"
 do
-    echo "$arg" "\c"
+    echo --- $arg
 done
-echo ""
 
 if [ ! "$ccompiler" = "" ]; then
     CMAKE_C_COMPILER="-DCMAKE_C_COMPILER=$ccompiler"
