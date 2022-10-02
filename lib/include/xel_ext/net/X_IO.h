@@ -44,10 +44,19 @@ struct XelIoContext {
     unsigned char     Reserved [16];
 };
 
-extern bool XIC_Init(XelIoContext * ContextPtr);
-extern void XIC_Clean(XelIoContext * ContextPtr);
-extern void XIC_LoopOnce(uint32_t TimeoutMS);
+typedef struct XelIoEventBase XelIoEventBase;
+struct XelIoEventBase {
+    void *            UserContextPtr;
+    unsigned char     Reserved [16];
+};
 
-extern void XS_SetNonBlocking(XelSocket Sock);
+X_API bool XIC_Init(XelIoContext * ContextPtr);
+X_API void XIC_Clean(XelIoContext * ContextPtr);
+X_API void XIC_LoopOnce(uint32_t TimeoutMS);
+
+X_API void XS_SetNonBlocking(XelSocket Sock);
+
+X_STATIC_INLINE bool XIEB_Init(XelIoEventBase * EventBasePtr)  { XelIoEventBase InitObject = { NULL };  *EventBasePtr = InitObject; return true; }
+X_STATIC_INLINE void XIEB_Clean(XelIoEventBase * EventBasePtr) {}
 
 X_CNAME_END

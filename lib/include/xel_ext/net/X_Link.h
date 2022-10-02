@@ -136,22 +136,22 @@ X_PRIVATE bool XL_WriteEventCallback(void * CtxPtr, XelLink* LinkPtr);
 X_PRIVATE void XL_ErrorEventCallback(void * CtxPtr, XelLink* LinkPtr);
 X_PRIVATE void XL_OnSetClose(void * CtxPtr, XelLink* LinkPtr);
 
-static inline XelWriteBuffer * XWBC_Alloc(XelWriteBufferChain * ChainPtr)
+X_STATIC_INLINE XelWriteBuffer * XWBC_Alloc(XelWriteBufferChain * ChainPtr)
 {
     return ChainPtr->AllocatorPtr->Alloc(ChainPtr->AllocatorPtr->CtxPtr);
 }
 
-static inline void XWBC_Free(XelWriteBufferChain * ChainPtr, XelWriteBuffer * BufferPtr)
+X_STATIC_INLINE void XWBC_Free(XelWriteBufferChain * ChainPtr, XelWriteBuffer * BufferPtr)
 {
     ChainPtr->AllocatorPtr->Free(ChainPtr->AllocatorPtr->CtxPtr, BufferPtr);
 }
 
-static inline XelWriteBuffer * XWBC_Peek(XelWriteBufferChain * ChainPtr)
+X_STATIC_INLINE XelWriteBuffer * XWBC_Peek(XelWriteBufferChain * ChainPtr)
 {
     return ChainPtr->FirstPtr;
 }
 
-static inline void XWBC_FreeFront(XelWriteBufferChain * ChainPtr)
+X_STATIC_INLINE void XWBC_FreeFront(XelWriteBufferChain * ChainPtr)
 {
     XelWriteBuffer * BufferPtr = ChainPtr->FirstPtr;
     assert(BufferPtr);
@@ -165,7 +165,7 @@ static inline void XWBC_FreeFront(XelWriteBufferChain * ChainPtr)
     XWBC_Free(ChainPtr, BufferPtr);
 }
 
-static inline XelWriteBufferChain XWBC_Init(XelWriteBuffer_Allocator * AllocatorPtr)
+X_STATIC_INLINE XelWriteBufferChain XWBC_Init(XelWriteBuffer_Allocator * AllocatorPtr)
 {
     if (!AllocatorPtr) {
         AllocatorPtr = XWB_DefaultAllocatorPtr;
@@ -176,14 +176,14 @@ static inline XelWriteBufferChain XWBC_Init(XelWriteBuffer_Allocator * Allocator
     return Ret;
 }
 
-static inline void XWBC_Clean(XelWriteBufferChain * ChainPtr)
+X_STATIC_INLINE void XWBC_Clean(XelWriteBufferChain * ChainPtr)
 {
     while(XWBC_Peek(ChainPtr)) {
         XWBC_FreeFront(ChainPtr);
     }
 }
 
-static inline void XWBC_Append(XelWriteBufferChain * ChainPtr, XelWriteBuffer * BufferPtr)
+X_STATIC_INLINE void XWBC_Append(XelWriteBufferChain * ChainPtr, XelWriteBuffer * BufferPtr)
 {
     assert(BufferPtr);
     assert(!BufferPtr->NextPtr);

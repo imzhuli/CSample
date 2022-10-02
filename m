@@ -1,6 +1,11 @@
 #!/bin/sh
 set -e
-cpu_num=`grep -c "model name" /proc/cpuinfo`
+
+if [ -e "/proc/cpuinfo" ]; then
+    cpu_num=`grep -c "model name" /proc/cpuinfo`
+else
+    cpu_num=`sysctl -a | grep machdep.cpu.thread_count | sed "s/^.*\ //g"`
+fi
 
 # rm -rf ./build
 # mkdir build

@@ -173,3 +173,46 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <assert.h>
+
+X_CNAME_BEGIN
+
+typedef unsigned char XelUByte;
+
+typedef union XelVariable XelVariable;
+union XelVariable
+{
+	XelUByte                      B[8];
+
+	void *                        Ptr;
+	const void *                  CstPtr;
+	const char *                  Str;
+
+	ptrdiff_t                     Offset;
+	size_t                        Size;
+
+	int                           I;
+	unsigned int                  U;
+	int8_t                        I8;
+	int16_t                       I16;
+	int32_t                       I32;
+	int64_t                       I64;
+	uint8_t                       U8;
+	uint16_t                      U16;
+	uint32_t                      U32;
+	uint64_t                      U64;
+
+	struct { int32_t  x, y; }     VI32;
+	struct { uint32_t x, y; }     VU32;
+};
+X_STATIC_INLINE XelVariable XV_Zero() { XelVariable InitObject = {{0}}; return InitObject; }
+
+typedef struct XelOptionalVariable XelOptionalVariable;
+struct XelOptionalVariable
+{
+	bool          HasValue;
+	XelVariable   Value;
+};
+X_STATIC_INLINE XelOptionalVariable XOV_NoValue()                   { XelOptionalVariable InitObject = { false }; return InitObject; }
+X_STATIC_INLINE XelOptionalVariable XOV_Value(XelVariable Value)    { XelOptionalVariable InitObject = { true, Value }; return InitObject; }
+
+X_CNAME_END

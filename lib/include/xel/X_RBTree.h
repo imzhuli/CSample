@@ -1,9 +1,7 @@
 #pragma once
 #include "./X_Base.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+X_CNAME_BEGIN
 
 /* Node */
 typedef struct XelRBNode XelRBNode;
@@ -221,6 +219,4 @@ X_API XelRBNode *  XRBT_InsertOrAssign(XelRBTree * TreePtr, XelRBNode * NodePtr,
 X_API void         XRBT_Remove(XelRBTree * TreePtr, XelRBNode * NodePtr);
 X_API bool         XRBT_Check(XelRBTree * TreePtr);
 
-#ifdef __cplusplus
-}
-#endif
+X_CNAME_END
