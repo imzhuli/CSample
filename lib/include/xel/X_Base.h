@@ -56,9 +56,14 @@
 #endif
 
 #if defined(_MSC_VER)
+
 	#ifndef NOMINMAX
 		#define NOMINMAX
 	#endif
+
+	#define X_LIKELY(x)                    (x))
+	#define X_UNLIKELY(x)                  (x))
+	#define X_PRINTF_LIKE(a, b)
 
 	#define X_INLINE                       __forceinline
 	#define X_STATIC_INLINE                static __forceinline
@@ -76,7 +81,13 @@
 	#define X_IMPORT                       __declspec(dllimport) extern
 	#define X_IMPORT_MEMBER                __declspec(dllimport)
 	#define X_IMPORT_STATIC_MEMBER         __declspec(dllimport) static
+
 #elif defined(__clang__) || defined(__GNUC__)
+
+	#define X_LIKELY(x)                    __builtin_expect(!!(x), 1)
+	#define X_UNLIKELY(x)                  __builtin_expect(!!(x), 0)
+	#define X_PRINTF_LIKE(f, a)            __attribute__((format(printf, f, a)))
+
 	#define X_INLINE                       __attribute__((always_inline)) inline
 	#define X_STATIC_INLINE                __attribute__((always_inline)) static inline
 
@@ -93,6 +104,7 @@
 	#define X_IMPORT                       extern
 	#define X_IMPORT_MEMBER
 	#define X_IMPORT_STATIC_MEMBER         static
+
 #else
 	#error "Unsupported compiler"
 #endif
