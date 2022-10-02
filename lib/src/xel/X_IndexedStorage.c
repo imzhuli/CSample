@@ -60,7 +60,7 @@ bool XIP_Check(XelIndexIdPool * PoolPtr, XelIndexId Id)
 		return false;
 	}
 	uint32_t Key = XII_ExtractKey(Id);
-	return X_LIKELY(Key & KeyInUseBitmask) && X_LIKELY(Key == PoolPtr->_IdPoolPtr[Index]);
+	return X_LIKELY(Key == PoolPtr->_IdPoolPtr[Index]);
 }
 
 bool XIP_CheckAndRelease(XelIndexIdPool * PoolPtr, XelIndexId Id)
@@ -70,7 +70,7 @@ bool XIP_CheckAndRelease(XelIndexIdPool * PoolPtr, XelIndexId Id)
 		return false;
 	}
 	uint32_t Key = XII_ExtractKey(Id);
-	if(!X_LIKELY(Key & KeyInUseBitmask) || !X_LIKELY(Key == PoolPtr->_IdPoolPtr[Index])) {
+	if(!X_LIKELY(Key == PoolPtr->_IdPoolPtr[Index])) {
 		return false;
 	}
 	PoolPtr->_IdPoolPtr[Index] = PoolPtr->_NextFreeIdIndex;
@@ -115,18 +115,18 @@ XelIndexId XISP_Acquire(XelIndexedStoragePool * PoolPtr, XelVariable Value)
 		NodePtr = &PoolPtr->_IdPoolPtr[(Index = PoolPtr->_InitedId++)];
 	} else {
 		NodePtr = &PoolPtr->_IdPoolPtr[(Index = PoolPtr->_NextFreeIdIndex)];
-		PoolPtr->_NextFreeIdIndex = NodePtr->Index;
+		PoolPtr->_NextFreeIdIndex = NodePtr->_NextFreeIndex;
 	}
 	uint32_t Rand = ++PoolPtr->_Counter | KeyInUseBitmask;
-	NodePtr->Key = Rand;
-	NodePtr->Value = Value;
+	NodePtr->_Key = Rand;
+	NodePtr->_Value = Value;
 	return (((XelIndexId)Rand) << 32) + Index;
 }
 
 void XISP_Release(XelIndexedStoragePool * PoolPtr, XelIndexId Id)
 {
 	uint32_t Index = XII_ExtractIndex(Id);
-	PoolPtr->_IdPoolPtr[Index].Index = PoolPtr->_NextFreeIdIndex;
+	PoolPtr->_IdPoolPtr[Index]._NextFreeIndex = PoolPtr->_NextFreeIdIndex;
 	PoolPtr->_NextFreeIdIndex = Index;
 }
 
@@ -137,7 +137,7 @@ bool XISP_Check(XelIndexedStoragePool * PoolPtr, XelIndexId Id)
 		return false;
 	}
 	uint32_t Key = XII_ExtractKey(Id);
-	return X_LIKELY(Key & KeyInUseBitmask) && X_LIKELY(Key == PoolPtr->_IdPoolPtr[Index].Key);
+	return X_LIKELY(Key == PoolPtr->_IdPoolPtr[Index]._Key);
 }
 
 XelOptionalVariable XISP_CheckAndGet(XelIndexedStoragePool * PoolPtr, XelIndexId Id)
@@ -148,8 +148,8 @@ XelOptionalVariable XISP_CheckAndGet(XelIndexedStoragePool * PoolPtr, XelIndexId
 	}
 	struct XelIndexedStoragePool_Node * NodePtr = &PoolPtr->_IdPoolPtr[Index];
 	uint32_t Key = XII_ExtractKey(Id);
-	if (X_LIKELY(Key & KeyInUseBitmask) && X_LIKELY(Key == NodePtr->Key)) {
-		return XOV_Value(NodePtr->Value);
+	if (X_LIKELY(Key == NodePtr->_Key)) {
+		return XOV_Value(NodePtr->_Value);
 	}
 	return XOV_NoValue();
 }
@@ -162,8 +162,8 @@ XelVariable * XISP_CheckAndGetRef(XelIndexedStoragePool * PoolPtr, XelIndexId Id
 	}
 	struct XelIndexedStoragePool_Node * NodePtr = &PoolPtr->_IdPoolPtr[Index];
 	uint32_t Key = XII_ExtractKey(Id);
-	if (X_LIKELY(Key & KeyInUseBitmask) && X_LIKELY(Key == NodePtr->Key)) {
-		return &NodePtr->Value;
+	if (X_LIKELY(Key == NodePtr->_Key)) {
+		return &NodePtr->_Value;
 	}
 	return NULL;
 }
@@ -175,10 +175,10 @@ bool XISP_CheckAndRelease(XelIndexedStoragePool * PoolPtr, XelIndexId Id)
 		return false;
 	}
 	uint32_t Key = XII_ExtractKey(Id);
-	if(!X_LIKELY(Key & KeyInUseBitmask) || !X_LIKELY(Key == PoolPtr->_IdPoolPtr[Index].Key)) {
+	if(!X_LIKELY(Key == PoolPtr->_IdPoolPtr[Index]._Key)) {
 		return false;
 	}
-	PoolPtr->_IdPoolPtr[Index].Index = PoolPtr->_NextFreeIdIndex;
+	PoolPtr->_IdPoolPtr[Index]._NextFreeIndex = PoolPtr->_NextFreeIdIndex;
 	PoolPtr->_NextFreeIdIndex = Index;
 	return true;
 }

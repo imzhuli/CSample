@@ -30,10 +30,10 @@ X_API bool          XIP_CheckAndRelease(XelIndexIdPool * PoolPtr, XelIndexId Id)
 struct XelIndexedStoragePool_Node
 {
 	union {
-		uint32_t   Index;
-		uint32_t   Key;
+		uint32_t   _NextFreeIndex;
+		uint32_t   _Key;
 	};
-	XelVariable    Value;
+	XelVariable    _Value;
 };
 typedef struct XelIndexedStoragePool XelIndexedStoragePool;
 struct XelIndexedStoragePool
@@ -52,8 +52,8 @@ X_API bool                      XISP_Check(XelIndexedStoragePool * PoolPtr, XelI
 X_API XelOptionalVariable       XISP_CheckAndGet(XelIndexedStoragePool * PoolPtr, XelIndexId Id);
 X_API XelVariable *             XISP_CheckAndGetRef(XelIndexedStoragePool * PoolPtr, XelIndexId Id);
 X_API bool                      XISP_CheckAndRelease(XelIndexedStoragePool * PoolPtr, XelIndexId Id);
-X_STATIC_INLINE XelVariable     XISP_Get(XelIndexedStoragePool * PoolPtr, XelIndexId Id) { return PoolPtr->_IdPoolPtr[XII_ExtractIndex(Id)].Value; }
-X_STATIC_INLINE XelVariable *   XISP_GetRef(XelIndexedStoragePool * PoolPtr, XelIndexId Id) { return &PoolPtr->_IdPoolPtr[XII_ExtractIndex(Id)].Value; }
+X_STATIC_INLINE XelVariable     XISP_Get(XelIndexedStoragePool * PoolPtr, XelIndexId Id) { return PoolPtr->_IdPoolPtr[XII_ExtractIndex(Id)]._Value; }
+X_STATIC_INLINE XelVariable *   XISP_GetRef(XelIndexedStoragePool * PoolPtr, XelIndexId Id) { return &PoolPtr->_IdPoolPtr[XII_ExtractIndex(Id)]._Value; }
 X_STATIC_INLINE void            XISP_Set(XelIndexedStoragePool * PoolPtr, XelIndexId Id, XelVariable Value) { *XISP_GetRef(PoolPtr, Id) = Value; }
 
 X_CNAME_END
