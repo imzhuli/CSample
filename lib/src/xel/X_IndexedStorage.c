@@ -3,7 +3,7 @@
 
 #define InvalidIndex    ((uint32_t)-1)
 #define MaxIndexValue   ((uint32_t)0x7FFFFFFFu)
-#define KeyInUseBitmask ((uint32_t)0x8000000u)
+#define KeyInUseBitmask ((uint32_t)0x80000000u)
 
 bool XIP_Init(XelIndexIdPool * PoolPtr, size_t Size)
 {
