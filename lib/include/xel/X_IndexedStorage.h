@@ -15,7 +15,7 @@ struct XelIndexIdPool
 	uint32_t*     _IdPoolPtr;
 	uint32_t      _IdPoolSize;
 	uint32_t      _InitedId;
-	uint32_t      _NextFreeIdIndex;
+	uint32_t      _NextFreeIndex;
 	uint32_t      _Counter;
 };
 
@@ -41,7 +41,7 @@ struct XelIndexedStoragePool
 	struct XelIndexedStoragePool_Node *  _IdPoolPtr;
 	uint32_t                             _IdPoolSize;
 	uint32_t                             _InitedId;
-	uint32_t                             _NextFreeIdIndex;
+	uint32_t                             _NextFreeIndex;
 	uint32_t                             _Counter;
 };
 X_API bool                      XISP_Init(XelIndexedStoragePool * PoolPtr, size_t Size);
