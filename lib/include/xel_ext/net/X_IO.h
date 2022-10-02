@@ -7,6 +7,8 @@
     #include <windef.h>
     #include <ws2def.h>
     #include <winsock2.h>
+        typedef HANDLE XelEventPoller;
+        #define XelInvalidEventPoller      (INVALID_HANDLE_VALUE)
         typedef SOCKET XelSocket;
         #define XelInvalidSocket           (INVALID_SOCKET)
         #define XelCloseSocket(sockfd)     closesocket((sockfd))

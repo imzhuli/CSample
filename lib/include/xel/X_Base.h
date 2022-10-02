@@ -61,8 +61,8 @@
 		#define NOMINMAX
 	#endif
 
-	#define X_LIKELY(x)                    (x))
-	#define X_UNLIKELY(x)                  (x))
+	#define X_LIKELY(x)                    (x)
+	#define X_UNLIKELY(x)                  (x)
 	#define X_PRINTF_LIKE(a, b)
 
 	#define X_INLINE                       __forceinline
