@@ -1,6 +1,6 @@
 #include <xel/X_Chrono.h>
 
-#ifdef ZEC_SYSTEM_WINDOWS
+#ifdef X_SYSTEM_WINDOWS
     #define WIN32_LEAN_AND_MEAN
     #include <Windows.h>
 
