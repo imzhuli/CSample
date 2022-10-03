@@ -10,33 +10,6 @@
 
 X_CNAME_BEGIN
 
-typedef uint32_t xel_in4;
-
-/* Ip utils */
-typedef union XelIpv4Addr {
-    xel_in4 Addr;
-    uint8_t Segs[4];
-} XelIpv4Addr;
-
-typedef struct XelIpv4Str {
-    char Data[16];
-} XelIpv4Str;
-
-static inline XelIpv4Str Ip4ToStr(const xel_in4 SockAddrIn)
-{
-    XelIpv4Str Ret;
-    XelIpv4Addr Punning;
-    Punning.Addr = SockAddrIn;
-    snprintf(Ret.Data, sizeof(Ret.Data), "%d.%d.%d.%d",
-        (int)Punning.Segs[0],
-        (int)Punning.Segs[1],
-        (int)Punning.Segs[2],
-        (int)Punning.Segs[3]);
-    Ret.Data[15] = '\0';
-    return Ret;
-}
-
-
 /* link */
 typedef enum {
     XLS_Idle = 0,
@@ -76,7 +49,7 @@ typedef struct XelLinkCallbacks {
 #define XEL_LINK_CALLBACK(LinkPtr, CallbackName) (*((LinkPtr)->CallbacksPtr->CallbackName))((LinkPtr)->CallbacksPtr->CtxPtr, (LinkPtr))
 
 typedef bool XelPacketCallback(void * CtxPtr, const XelPacketHeader * HeaderPtr, const void * PayloadPtr, size_t PayloadSize);
-X_PRIVATE bool XL_Connect(XelLink * LinkPtr, xel_in4 Addr, uint16_t Port);
+X_PRIVATE bool XL_Connect(XelLink * LinkPtr, uint32_t SAddr, uint16_t Port);
 X_PRIVATE bool XL_ReadRawData(XelLink * LinkPtr, void * DestBufferPtr, size_t * DestBufferSize);
 X_PRIVATE bool XL_ReadPacketLoop(XelLink * LinkPtr, XelPacketCallback * CallbackPtr, void * CallbackCtxPtr);
 X_PRIVATE bool XL_WriteRawData(XelLink * LinkPtr, const void * DataPtr, size_t Length);

@@ -7,6 +7,7 @@
     #include <windef.h>
     #include <ws2def.h>
     #include <winsock2.h>
+    #include <Ws2tcpip.h>
         typedef HANDLE XelEventPoller;
         #define XelInvalidEventPoller      (INVALID_HANDLE_VALUE)
         typedef SOCKET XelSocket;
@@ -20,6 +21,7 @@
     #include <sys/types.h>
     #include <unistd.h>
     #include <netinet/in.h>
+    #include <arpa/inet.h>
         typedef int XelSocket;
         #define XelInvalidSocket           ((XelSocket)-1)
         #define XelCloseSocket(sockfd)     close((sockfd))
@@ -31,6 +33,7 @@
     #include <sys/types.h>
     #include <unistd.h>
     #include <netinet/in.h>
+    #include <arpa/inet.h>
         typedef int XelSocket;
         #define XelInvalidSocket           ((XelSocket)-1)
         #define XelCloseSocket(sockfd)     close((sockfd))

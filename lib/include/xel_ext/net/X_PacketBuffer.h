@@ -10,12 +10,12 @@ typedef struct XelWriteBuffer {
     struct XelWriteBuffer *    NextPtr;
 } XelWriteBuffer;
 
-static inline void XWB_Init(XelWriteBuffer * BufferPtr) {
+X_STATIC_INLINE void XWB_Init(XelWriteBuffer * BufferPtr) {
     BufferPtr->BufferDataSize = 0;
     BufferPtr->NextPtr = 0;
 }
 
-static inline void XWB_Clean(XelWriteBuffer * BufferPtr) {
+X_STATIC_INLINE void XWB_Clean(XelWriteBuffer * BufferPtr) {
     assert(!BufferPtr->NextPtr);
     BufferPtr->BufferDataSize = 0;
 }
@@ -25,6 +25,7 @@ typedef struct {
     void (*Free)(void *, XelWriteBuffer *);
     void * CtxPtr;
 } XelWriteBuffer_Allocator;
+
 X_PRIVATE XelWriteBuffer_Allocator * const XWB_DefaultAllocatorPtr;
 
 typedef struct XelWriteBufferChain {
@@ -32,7 +33,6 @@ typedef struct XelWriteBufferChain {
     XelWriteBuffer * LastPtr;
     XelWriteBuffer_Allocator *  AllocatorPtr;
 } XelWriteBufferChain;
-
 
 X_STATIC_INLINE XelWriteBuffer * XWBC_Alloc(XelWriteBufferChain * ChainPtr)
 {

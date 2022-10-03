@@ -1,4 +1,5 @@
 #include <xel_ext/net/X_Link.h>
+
 #ifdef MSG_NOSIGNAL
     #define XelNoWriteSignal       MSG_NOSIGNAL
 #else
@@ -90,31 +91,8 @@ bool XL_FlushData(XelLink * LinkPtr)
     return true;
 }
 
-
-/* Allocator */
-static XelWriteBuffer * XWB_DefaultAlloc(void * CtxPtr)
-{
-    return (XelWriteBuffer*)malloc(sizeof(XelWriteBuffer));
-}
-
-static void XWB_DefaultFree(void * CtxPtr, XelWriteBuffer * BufferPtr)
-{
-    free(BufferPtr);
-}
-
-static XelWriteBuffer_Allocator XWB_DefaultAllocator = {
-    &XWB_DefaultAlloc,
-    &XWB_DefaultFree,
-    NULL
-};
-
-XelWriteBuffer_Allocator * const XWB_DefaultAllocatorPtr = &XWB_DefaultAllocator;
-
-/* Link Header */
-
-
 /* Link */
- bool XL_Connect(XelLink * LinkPtr, xel_in4 Addr, uint16_t Port)
+ bool XL_Connect(XelLink * LinkPtr, uint32_t SAddr, uint16_t Port)
  {
     assert(LinkPtr->Status == XLS_Idle);
     assert(LinkPtr->SocketFd == XelInvalidSocket);
@@ -126,7 +104,7 @@ XelWriteBuffer_Allocator * const XWB_DefaultAllocatorPtr = &XWB_DefaultAllocator
     struct sockaddr_in TargetAddr;
     memset(&TargetAddr, 0, sizeof(TargetAddr));
     TargetAddr.sin_family = AF_INET;
-    TargetAddr.sin_addr.s_addr = Addr;
+    TargetAddr.sin_addr.s_addr = SAddr;
     TargetAddr.sin_port = htons(Port);
     if (0 == connect(LinkPtr->SocketFd, (struct sockaddr*)&TargetAddr, sizeof(TargetAddr))) {
         LinkPtr->Status = XLS_Connected;

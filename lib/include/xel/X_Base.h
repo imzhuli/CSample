@@ -215,4 +215,14 @@ struct XelOptionalVariable
 X_STATIC_INLINE XelOptionalVariable XOV_NoValue()                   { XelOptionalVariable InitObject = { false }; return InitObject; }
 X_STATIC_INLINE XelOptionalVariable XOV_Value(XelVariable Value)    { XelOptionalVariable InitObject = { true, Value }; return InitObject; }
 
+#define X_AddressOf(T) (&(T))
+X_STATIC_INLINE void * X_Cast(void * MemberPtr, size_t MemberOffset)
+{
+	if (!MemberPtr) {
+		return NULL;
+	}
+    return (void*)((unsigned char*)MemberPtr - MemberOffset);
+}
+#define X_Entry(_MemberPtr, Type, Member) ((Type*)(X_Cast((_MemberPtr), offsetof(Type, Member))))
+
 X_CNAME_END

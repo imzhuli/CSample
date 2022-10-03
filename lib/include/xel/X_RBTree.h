@@ -18,44 +18,45 @@ typedef struct XelRBInsertSlot
     XelRBNode ** SubNodeRefPtr;
 } XelRBInsertSlot;
 
-static inline void XRBN_Init(XelRBNode * NodePtr) {
+X_STATIC_INLINE void XRBN_Init(XelRBNode * NodePtr) {
     XelRBNode InitValue = { NULL, NULL, NULL, false };
     *NodePtr = InitValue;
 }
 
-static inline bool XRBN_IsRoot(XelRBNode * NodePtr) {
+X_STATIC_INLINE bool XRBN_IsRoot(XelRBNode * NodePtr) {
     return !NodePtr->ParentPtr;
 }
-static inline bool XRBN_IsLeaf(XelRBNode * NodePtr) {
+X_STATIC_INLINE bool XRBN_IsLeaf(XelRBNode * NodePtr) {
     return !NodePtr->LeftNodePtr && !NodePtr->RightNodePtr;
 }
-static inline bool XRBN_IsRed(XelRBNode * NodePtr) {
+X_STATIC_INLINE bool XRBN_IsRed(XelRBNode * NodePtr) {
     return NodePtr->RedFlag;
 }
-static inline bool XRBN_IsGenericRed(XelRBNode * NodePtr) {
+X_STATIC_INLINE bool XRBN_IsGenericRed(XelRBNode * NodePtr) {
     return NodePtr && (NodePtr->RedFlag);
 }
-static inline bool XRBN_IsBlack(XelRBNode * NodePtr) {
+X_STATIC_INLINE bool XRBN_IsBlack(XelRBNode * NodePtr) {
     return !XRBN_IsRed(NodePtr);
 }
-static inline bool XRBN_IsGenericBlack(XelRBNode * NodePtr) {
+X_STATIC_INLINE bool XRBN_IsGenericBlack(XelRBNode * NodePtr) {
     return !NodePtr || !XRBN_IsRed(NodePtr);
 }
-static inline void XRBN_MarkRed(XelRBNode * NodePtr) {
+X_STATIC_INLINE void XRBN_MarkRed(XelRBNode * NodePtr) {
     NodePtr->RedFlag = true;
 }
-static inline void XRBN_MarkBlack(XelRBNode * NodePtr) {
+X_STATIC_INLINE void XRBN_MarkBlack(XelRBNode * NodePtr) {
     NodePtr->RedFlag = false;
 }
 
-static inline void* XRBN_Cast(XelRBNode* NodePtr, size_t NodeMemberOffset) {
-    if (!NodePtr) {
-        return NULL;
-    }
-    return (void*)((unsigned char*)NodePtr - NodeMemberOffset);
-}
+// X_STATIC_INLINE void* XRBN_Cast(XelRBNode* NodePtr, size_t NodeMemberOffset) {
+//     if (!NodePtr) {
+//         return NULL;
+//     }
+//     return (void*)((unsigned char*)NodePtr - NodeMemberOffset);
+// }
+// #define XRBN_ENTRY(_What, Type, Member) ((Type*)(XRBN_Cast((_What), offsetof(Type, Member))))
 
-static inline XelRBNode * XRBN_LeftMost(XelRBNode * NodePtr) {
+X_STATIC_INLINE XelRBNode * XRBN_LeftMost(XelRBNode * NodePtr) {
     // assert(NodePtr);
     while (NodePtr->LeftNodePtr) {
         NodePtr = NodePtr->LeftNodePtr;
@@ -63,7 +64,7 @@ static inline XelRBNode * XRBN_LeftMost(XelRBNode * NodePtr) {
     return NodePtr;
 }
 
-static inline XelRBNode * XRBN_RightMost(XelRBNode * NodePtr) {
+X_STATIC_INLINE XelRBNode * XRBN_RightMost(XelRBNode * NodePtr) {
     // assert(NodePtr);
     while (NodePtr->RightNodePtr) {
         NodePtr = NodePtr->RightNodePtr;
@@ -71,7 +72,7 @@ static inline XelRBNode * XRBN_RightMost(XelRBNode * NodePtr) {
     return NodePtr;
 }
 
-static inline XelRBNode * XRBN_Prev(XelRBNode * NodePtr) {
+X_STATIC_INLINE XelRBNode * XRBN_Prev(XelRBNode * NodePtr) {
     XelRBNode * ParentPtr;
     if (NodePtr->LeftNodePtr) {
         return XRBN_RightMost(NodePtr->LeftNodePtr);
@@ -82,7 +83,7 @@ static inline XelRBNode * XRBN_Prev(XelRBNode * NodePtr) {
     return ParentPtr;
 }
 
-static inline XelRBNode * XRBN_Next(XelRBNode * NodePtr) {
+X_STATIC_INLINE XelRBNode * XRBN_Next(XelRBNode * NodePtr) {
     XelRBNode * ParentPtr;
     if (NodePtr->RightNodePtr) {
         return XRBN_LeftMost(NodePtr->RightNodePtr);
@@ -93,8 +94,6 @@ static inline XelRBNode * XRBN_Next(XelRBNode * NodePtr) {
     return ParentPtr;
 }
 
-#define XRBN_ENTRY(_What, Type, Member) ((Type*)(XRBN_Cast((_What), offsetof(Type, Member))))
-
 /* Tree */
 typedef struct XelRBTree XelRBTree;
 struct XelRBTree {
@@ -103,34 +102,34 @@ struct XelRBTree {
 
 typedef int XRBT_KeyCompare(XelRBTree * TreePtr, const void * KeyPtr, XelRBNode * NodePtr);
 
-static inline void XRBT_Init(XelRBTree* TreePtr) {
+X_STATIC_INLINE void XRBT_Init(XelRBTree* TreePtr) {
     XelRBTree InitValue = { NULL };
     *TreePtr = InitValue;
 }
 
-static inline bool XRBT_IsEmpty(XelRBTree* TreePtr) {
+X_STATIC_INLINE bool XRBT_IsEmpty(XelRBTree* TreePtr) {
     return !TreePtr->RootPtr;
 }
 
-static inline void* XRBT_Cast(XelRBTree* TreePtr, size_t NodeMemberOffset) {
-    if (!TreePtr) {
-        return NULL;
-    }
-    return (void*)((unsigned char*)TreePtr - NodeMemberOffset);
-}
-#define XRBT_ENTRY(_What, Type, Member) ((Type*)(XRBT_Cast((_What), offsetof(Type, Member))))
+// X_STATIC_INLINE void* XRBT_Cast(XelRBTree* TreePtr, size_t NodeMemberOffset) {
+//     if (!TreePtr) {
+//         return NULL;
+//     }
+//     return (void*)((unsigned char*)TreePtr - NodeMemberOffset);
+// }
+// #define XRBT_ENTRY(_What, Type, Member) ((Type*)(XRBT_Cast((_What), offsetof(Type, Member))))
 
-static inline XelRBNode * XRBT_First(XelRBTree * TreePtr)
+X_STATIC_INLINE XelRBNode * XRBT_First(XelRBTree * TreePtr)
 {
     return TreePtr->RootPtr ? XRBN_LeftMost(TreePtr->RootPtr) : NULL;
 }
 
-static inline XelRBNode * XRBT_Last(XelRBTree * TreePtr)
+X_STATIC_INLINE XelRBNode * XRBT_Last(XelRBTree * TreePtr)
 {
     return TreePtr->RootPtr ? XRBN_RightMost(TreePtr->RootPtr) : NULL;
 }
 
-static inline XelRBNode *XRBT_Find(XelRBTree * TreePtr, XRBT_KeyCompare * CompFunc, const void * KeyPtr) {
+X_STATIC_INLINE XelRBNode *XRBT_Find(XelRBTree * TreePtr, XRBT_KeyCompare * CompFunc, const void * KeyPtr) {
     XelRBNode * CurrNodePtr = TreePtr->RootPtr;
     while (CurrNodePtr) {
         int CompareResult = (*CompFunc)(TreePtr, KeyPtr, CurrNodePtr);
@@ -147,7 +146,7 @@ static inline XelRBNode *XRBT_Find(XelRBTree * TreePtr, XRBT_KeyCompare * CompFu
     return NULL;
 }
 
-static inline XelRBInsertSlot XRBT_FindInsertSlot(XelRBTree * TreePtr, XRBT_KeyCompare * CompFunc, const void *KeyPtr) {
+X_STATIC_INLINE XelRBInsertSlot XRBT_FindInsertSlot(XelRBTree * TreePtr, XRBT_KeyCompare * CompFunc, const void *KeyPtr) {
     XelRBInsertSlot InsertNode = { NULL, NULL };
     XelRBNode ** CurrNodeRefPtr = &TreePtr->RootPtr;
     while (*CurrNodeRefPtr) {
@@ -169,14 +168,14 @@ static inline XelRBInsertSlot XRBT_FindInsertSlot(XelRBTree * TreePtr, XRBT_KeyC
 }
 
 /* if a FindInsertSlot result indicates replacement, return the to-bo replaced node */
-static inline XelRBNode * XRBT_Original(XelRBInsertSlot InsertSlot) {
+X_STATIC_INLINE XelRBNode * XRBT_Original(XelRBInsertSlot InsertSlot) {
     if (InsertSlot.SubNodeRefPtr) {
         return NULL;
     }
     return InsertSlot.ParentPtr;
 }
 
-static inline void XRBT_Replace(XelRBTree * TreePtr, XelRBInsertSlot InsertSlot, XelRBNode * NodePtr)
+X_STATIC_INLINE void XRBT_Replace(XelRBTree * TreePtr, XelRBInsertSlot InsertSlot, XelRBNode * NodePtr)
 {
     assert(!InsertSlot.SubNodeRefPtr);
     if (!InsertSlot.ParentPtr) { // root
