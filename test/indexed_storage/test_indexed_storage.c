@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <inttypes.h>
 
-#define TestSize 512
+#define TestSize 10240
 
 static void TestIdPool()
 {
@@ -75,8 +75,8 @@ static void TestIdStorage()
 
     uint64_t FailKey = XelInvalidIndexId;
     uint64_t Keys[TestSize];
-    memset(Keys, 0, sizeof(Keys));    
-    
+    memset(Keys, 0, sizeof(Keys));
+
     if (XISP_Check(PoolPtr, (XelIndexId)-1)) {
         printf("TestIdStorage Fatal: Attack key allowd\n");
         goto Error;
@@ -95,7 +95,7 @@ static void TestIdStorage()
     if (FailKey != XelInvalidIndexId) {
         printf("TestIdStorage Failed to fail on acquire over TestSize\n");
         goto Error;
-    }    
+    }
 
     for (size_t i = 0 ; i < TestSize; ++i) {
         if (Keys[i] == XelInvalidIndexId) {
@@ -108,11 +108,11 @@ static void TestIdStorage()
             goto Error;
         }
         XelVariable * ValuePtr = XISP_CheckAndGetRef(PoolPtr, Keys[i]);
-        if (!ValuePtr || ValuePtr->U32 != (uint32_t)i) {            
+        if (!ValuePtr || ValuePtr->U32 != (uint32_t)i) {
             printf("TestIdStorage faild to get valid reference to oringally stored value\n");
             goto Error;
         }
-        if (!XISP_CheckAndRelease(PoolPtr, Keys[i])) {   
+        if (!XISP_CheckAndRelease(PoolPtr, Keys[i])) {
             printf("TestIdStorage faild to check and release, index=%" PRIu32 ", id=%" PRIu64 ", \n", (uint32_t)i, Keys[i]);
             goto Error;
         }
