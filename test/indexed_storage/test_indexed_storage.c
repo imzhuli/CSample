@@ -8,9 +8,12 @@
 
 static void TestIdPool()
 {
-    XelIndexIdPool IdPool;
-    XelIndexIdPool * PoolPtr = &IdPool;
-    XIP_Init(PoolPtr, TestSize);
+    XelIndexIdPool * PoolPtr = XIP_New(TestSize);
+    if (!PoolPtr) {
+        printf("TestIdPool bad alloc\n");
+        exit(-1);
+    }
+
     uint64_t FailKey = XelInvalidIndexId;
     uint64_t Keys[TestSize];
     memset(Keys, 0, sizeof(Keys));
@@ -55,23 +58,24 @@ static void TestIdPool()
         goto Error;
     }
 
-    XIP_Clean(PoolPtr);
+    XIP_Delete(PoolPtr);
     return;
 
 Error:
-    XIP_Clean(PoolPtr);
+    XIP_Delete(PoolPtr);
     exit(-1);
 }
 
 static void TestIdStorage()
 {
-    XelIndexedStoragePool Pool;
-    XelIndexedStoragePool * PoolPtr = &Pool;
+    XelIndexedStoragePool * PoolPtr = XISP_New(TestSize);
+    if (!PoolPtr) {
+        printf("TestIdStorage bad alloc\n");
+    }
+
     uint64_t FailKey = XelInvalidIndexId;
     uint64_t Keys[TestSize];
     memset(Keys, 0, sizeof(Keys));    
-
-    XISP_Init(PoolPtr, TestSize);
     
     if (XISP_Check(PoolPtr, (XelIndexId)-1)) {
         printf("TestIdStorage Fatal: Attack key allowd\n");
@@ -129,11 +133,11 @@ static void TestIdStorage()
         goto Error;
     }
 
-    XISP_Clean(PoolPtr);
+    XISP_Delete(PoolPtr);
     return;
 
 Error:
-    XISP_Clean(PoolPtr);
+    XISP_Delete(PoolPtr);
     exit(-1);
 }
 

@@ -7,28 +7,37 @@
 #define KeyMask         (MaxIndexValue | KeyInUseBitmask)
 X_STATIC_INLINE bool IsSafeKey(uint32_t Key) { return X_LIKELY(Key != (uint32_t)-1); }
 
-bool XIP_Init(XelIndexIdPool * PoolPtr, size_t Size)
+struct XelIndexIdPool
 {
+	uint32_t      _NextFreeIndex;
+	uint32_t      _InitedId;
+	uint32_t      _Counter;
+	uint32_t      _IdPoolSize;
+	uint32_t      _IdPoolPtr[1];
+};
+
+X_API XelIndexIdPool *  XIP_New(size_t Size)
+{	
 	assert(Size && Size < MaxIndexValue);
 
+	size_t TotalSize = sizeof(XelIndexIdPool) + sizeof(uint32_t) * Size;
+	XelIndexIdPool * PoolPtr = (XelIndexIdPool*)malloc(TotalSize);
+	if (!PoolPtr) {
+		return NULL;
+	}
+
 	XelIndexIdPool InitObject = { ._NextFreeIndex = NoFreeIndex };
 	*PoolPtr = InitObject;
 
-	if (!(PoolPtr->_IdPoolPtr = (uint32_t*)malloc(sizeof(uint32_t) * Size))) {
-		return false;
-	}
 	PoolPtr->_IdPoolSize = (uint32_t)Size;
 	PoolPtr->_Counter = (uint32_t)X_GetTimestampUS();
-	return true;
+	return PoolPtr;
 }
 
-void XIP_Clean(XelIndexIdPool * PoolPtr)
+void XIP_Delete(XelIndexIdPool * PoolPtr)
 {
-	assert(PoolPtr && PoolPtr->_IdPoolPtr);
-	free(PoolPtr->_IdPoolPtr);
-
-	XelIndexIdPool InitObject = { ._NextFreeIndex = NoFreeIndex };
-	*PoolPtr = InitObject;
+	assert(PoolPtr);
+	free(PoolPtr);
 }
 
 XelIndexId XIP_Acquire(XelIndexIdPool * PoolPtr)
@@ -84,28 +93,27 @@ bool XIP_CheckAndRelease(XelIndexIdPool * PoolPtr, XelIndexId Id)
 
 ////// Storage
 
-bool XISP_Init(XelIndexedStoragePool * PoolPtr, size_t Size)
+XelIndexedStoragePool * XISP_New(size_t Size)
 {
 	assert(Size && Size < MaxIndexValue);
-
-	XelIndexedStoragePool InitObject = { ._NextFreeIndex = NoFreeIndex };
-	*PoolPtr = InitObject;
-
-	if (!(PoolPtr->_IdPoolPtr = (struct XelIndexedStoragePool_Node*)malloc(sizeof(struct XelIndexedStoragePool_Node) * Size))) {
-		return false;
+	size_t TotalSize = sizeof(XelIndexedStoragePool) + sizeof(struct XelIndexedStoragePool_Node) * Size;
+	XelIndexedStoragePool * PoolPtr = (XelIndexedStoragePool *)malloc(TotalSize);
+	if (!PoolPtr) {
+		return NULL;
 	}
-	PoolPtr->_IdPoolSize = (uint32_t)Size;
-	PoolPtr->_Counter = (uint32_t)X_GetTimestampUS();
-	return true;
+
+	*PoolPtr = (XelIndexedStoragePool){
+		._NextFreeIndex = NoFreeIndex,
+		._Counter = (uint32_t)X_GetTimestampUS(),
+		._IdPoolSize = (uint32_t)Size,
+	};
+	return PoolPtr;
 }
 
-void XISP_Clean(XelIndexedStoragePool * PoolPtr)
+void XISP_Delete(XelIndexedStoragePool * PoolPtr)
 {
-	assert(PoolPtr && PoolPtr->_IdPoolPtr);
-	free(PoolPtr->_IdPoolPtr);
-
-	XelIndexedStoragePool InitObject = { ._NextFreeIndex = NoFreeIndex };
-	*PoolPtr = InitObject;
+	assert(PoolPtr);
+	free(PoolPtr);
 }
 
 XelIndexId XISP_Acquire(XelIndexedStoragePool * PoolPtr, XelVariable Value)
