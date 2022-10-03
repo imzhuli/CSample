@@ -27,7 +27,7 @@ size_t XPH_Read(XelPacketHeader * HeaderPtr, const void * SourcePtr)
     return HeaderPtr->PacketLength;
 }
 
-void XLH_Write(void * DestPtr, const XelPacketHeader * HeaderPtr)
+void XPH_Write(void * DestPtr, const XelPacketHeader * HeaderPtr)
 {
     XelStreamWriter Ctx = XSW(DestPtr);
     XSW_4L(&Ctx, MakeHeaderLength(HeaderPtr->PacketLength));
