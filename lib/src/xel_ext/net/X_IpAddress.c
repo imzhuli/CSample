@@ -29,5 +29,5 @@ bool X_StrToIpv4(XelInAddr * OutputPtr, const char * Str)
 
 bool X_StrToIpv6(XelIn6Addr * OutputPtr, const char * Str)
 {
-    return inet_pton(AF_INET, Str, OutputPtr);
+    return inet_pton(AF_INET6, Str, OutputPtr);
 }
