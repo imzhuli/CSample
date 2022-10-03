@@ -5,17 +5,9 @@
 #include <stdio.h>
 #include <errno.h>
 #include "./X_IO.h"
+#include "./X_Packet.h"
 
-#define XelLinkHeaderSize          ((size_t)(32))
-#define XelLinkMagicMask           ((size_t)(0xFF000000))
-#define XelLinkMagicValue          ((size_t)(0xCD000000))
-#define XelLinkLengthMask          ((size_t)(0x00FFFFFF))
-#define XelMaxLinkPacketSize       ((size_t)(4096 & XelLinkLengthMask))
-#define XelMaxLinkPayloadSize      ((size_t)(XelMaxLinkPacketSize - XelLinkHeaderSize))
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+X_CNAME_BEGIN
 
 typedef uint32_t xel_in4;
 
@@ -43,21 +35,9 @@ static inline XelIpv4Str Ip4ToStr(const xel_in4 SockAddrIn)
     return Ret;
 }
 
-typedef struct XelLinkHeader {
-    uint32_t     PacketLength; // header size included, lower 24 bits as length, higher 8 bits as a magic check
-    uint8_t      PackageSequenceId; // the index of the packet in a full package, (this is no typo)
-    uint8_t      PackageSequenceTotalMax;
-    uint16_t     CommandId;
-    uint64_t     RequestId;
-    xel_byte     TraceId[16]; // allow uuid
-} XelLinkHeader;
-
-size_t XLH_Read(XelLinkHeader * HeaderPtr, const void * SourcePtr);
-void   XLH_Write(const XelLinkHeader * HeaderPtr, void * DestPtr);
-
 /* WriteBuffer(Chain) */
 typedef struct XelWriteBuffer {
-    xel_byte                   Buffer[XelMaxLinkPacketSize];
+    XelUByte                   Buffer[XelPacketMaxSize];
     size_t                     BufferDataSize;
     struct XelWriteBuffer *    NextPtr;
 } XelWriteBuffer;
@@ -102,7 +82,7 @@ typedef struct {
     XelLinkStatus               Status;
     uint32_t                    Flags;
     XelSocket                   SocketFd;
-    xel_byte                    ReadBuffer[XelMaxLinkPacketSize];
+    XelUByte                    ReadBuffer[XelPacketMaxSize];
     size_t                      ReadBufferDataSize;
     XelWriteBufferChain         BufferChain;
     struct XelLinkCallbacks *   CallbacksPtr;
@@ -123,7 +103,7 @@ typedef struct XelLinkCallbacks {
 } XelLinkCallbacks;
 #define XEL_LINK_CALLBACK(LinkPtr, CallbackName) (*((LinkPtr)->CallbacksPtr->CallbackName))((LinkPtr)->CallbacksPtr->CtxPtr, (LinkPtr))
 
-typedef bool XelPacketCallback(void * CtxPtr, const XelLinkHeader * HeaderPtr, const void * PayloadPtr, size_t PayloadSize);
+typedef bool XelPacketCallback(void * CtxPtr, const XelPacketHeader * HeaderPtr, const void * PayloadPtr, size_t PayloadSize);
 X_PRIVATE bool XL_Connect(XelLink * LinkPtr, xel_in4 Addr, uint16_t Port);
 X_PRIVATE bool XL_ReadRawData(XelLink * LinkPtr, void * DestBufferPtr, size_t * DestBufferSize);
 X_PRIVATE bool XL_ReadPacketLoop(XelLink * LinkPtr, XelPacketCallback * CallbackPtr, void * CallbackCtxPtr);
@@ -199,6 +179,4 @@ X_API void XL_Clean(XelLink * LinkPtr);
 X_API bool XL_AppendData(XelLink * LinkPtr, const void * DataPtr, size_t DataSize);
 X_API bool XL_FlushData(XelLink * LinkPtr);
 
-#ifdef __cplusplus
-}
-#endif
+X_CNAME_END

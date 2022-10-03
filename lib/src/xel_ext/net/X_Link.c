@@ -42,7 +42,7 @@ void XL_Clean(XelLink * LinkPtr)
 bool XL_AppendData(XelLink * LinkPtr, const void * DataPtr, size_t DataSize)
 {
     XelWriteBufferChain * ChainPtr = &LinkPtr->BufferChain;
-    const xel_byte * Cursor = DataPtr;
+    const XelUByte * Cursor = DataPtr;
     size_t RemainSize = DataSize;
     while(RemainSize) {
         XelWriteBuffer * BufferPtr = XWBC_Alloc(ChainPtr);
@@ -50,7 +50,7 @@ bool XL_AppendData(XelLink * LinkPtr, const void * DataPtr, size_t DataSize)
             XL_SetError(LinkPtr);
             return false;
         }
-        size_t CopySize = RemainSize < XelMaxLinkPacketSize ? RemainSize : XelMaxLinkPacketSize;
+        size_t CopySize = RemainSize < XelPacketMaxSize ? RemainSize : XelPacketMaxSize;
         memcpy(BufferPtr->Buffer, Cursor, CopySize);
         BufferPtr->BufferDataSize = CopySize;
         XWBC_Append(ChainPtr, BufferPtr);
@@ -111,42 +111,7 @@ static XelWriteBuffer_Allocator XWB_DefaultAllocator = {
 XelWriteBuffer_Allocator * const XWB_DefaultAllocatorPtr = &XWB_DefaultAllocator;
 
 /* Link Header */
-static inline uint32_t MakeHeaderLength(uint32_t PacketLength) {
-    assert(PacketLength <= XelMaxLinkPacketSize);
-    return PacketLength | XelLinkMagicValue;
-}
 
-static inline bool CheckPackageLength(uint32_t PacketLength) {
-    return (PacketLength & XelLinkMagicMask) == XelLinkMagicValue
-        && (PacketLength & XelLinkLengthMask) <= XelMaxLinkPacketSize;
-}
-
-size_t XLH_Read(XelLinkHeader * HeaderPtr, const void * SourcePtr)
-{
-    XelStreamReaderContext Ctx = XSR(SourcePtr);
-    HeaderPtr->PacketLength = XSR_4L(&Ctx);
-    if (!CheckPackageLength(HeaderPtr->PacketLength)) {
-        return 0;
-    }
-    HeaderPtr->PacketLength &= XelLinkLengthMask;
-    HeaderPtr->PackageSequenceId        = XSR_1L(&Ctx);
-    HeaderPtr->PackageSequenceTotalMax  = XSR_1L(&Ctx);
-    HeaderPtr->CommandId                = XSR_2L(&Ctx);
-    HeaderPtr->RequestId                = XSR_8L(&Ctx);
-    XSR_Raw(&Ctx, HeaderPtr->TraceId, 16);
-    return HeaderPtr->PacketLength;
-}
-
-void XLH_Write(const XelLinkHeader * HeaderPtr, void * DestPtr)
-{
-    XelStreamWriterContext Ctx = XSW(DestPtr);
-    XSW_4L(&Ctx, MakeHeaderLength(HeaderPtr->PacketLength));
-    XSW_1L(&Ctx, HeaderPtr->PackageSequenceId);
-    XSW_1L(&Ctx, HeaderPtr->PackageSequenceTotalMax);
-    XSW_2L(&Ctx, HeaderPtr->CommandId);
-    XSW_8L(&Ctx, HeaderPtr->RequestId);
-    XSW_Raw(&Ctx, HeaderPtr->TraceId, 16);
-}
 
 /* Link */
  bool XL_Connect(XelLink * LinkPtr, xel_in4 Addr, uint16_t Port)
@@ -203,27 +168,27 @@ bool XL_ReadPacketLoop(XelLink * LinkPtr, XelPacketCallback * CallbackPtr, void 
     assert(XL_IsWorking(LinkPtr));
     assert(CallbackPtr);
 
-    ssize_t Rb = recv(LinkPtr->SocketFd, LinkPtr->ReadBuffer + LinkPtr->ReadBufferDataSize, (recv_len_t)(XelMaxLinkPacketSize - LinkPtr->ReadBufferDataSize), 0);
+    ssize_t Rb = recv(LinkPtr->SocketFd, LinkPtr->ReadBuffer + LinkPtr->ReadBufferDataSize, (recv_len_t)(XelPacketMaxSize - LinkPtr->ReadBufferDataSize), 0);
     if (Rb == 0) { XEL_LINK_CALLBACK(LinkPtr, OnSetClose); return false; }
     if (Rb < 0) { return errno == EAGAIN; }
     LinkPtr->ReadBufferDataSize += Rb;
 
-    xel_byte * StartPtr = LinkPtr->ReadBuffer;
+    XelUByte * StartPtr = LinkPtr->ReadBuffer;
     size_t RemainSize   = LinkPtr->ReadBufferDataSize;
     while(true) {
-        if (RemainSize < XelLinkHeaderSize) {
+        if (RemainSize < XelPacketHeaderSize) {
             break;
         }
-        XelLinkHeader Header;
+        XelPacketHeader Header;
         memset(&Header, 0, sizeof(Header));
-        if (!XLH_Read(&Header, StartPtr)) {
+        if (!XPH_Read(&Header, StartPtr)) {
             XL_SetError(LinkPtr);
             return false;
         }
         if (RemainSize < Header.PacketLength) {
             break;
         }
-        if (!(*CallbackPtr)(CallbackCtxPtr, &Header, StartPtr + XelLinkHeaderSize, Header.PacketLength - XelLinkHeaderSize)) {
+        if (!(*CallbackPtr)(CallbackCtxPtr, &Header, StartPtr + XelPacketHeaderSize, Header.PacketLength - XelPacketHeaderSize)) {
             XL_SetError(LinkPtr);
             return false;
         }
@@ -244,7 +209,7 @@ bool XL_WriteRawData(XelLink * LinkPtr, const void * _DataPtr, size_t Length)
         return false;
     }
 
-    const xel_byte * DataPtr = _DataPtr;
+    const XelUByte * DataPtr = _DataPtr;
     XelWriteBufferChain * ChainPtr = &LinkPtr->BufferChain;
     if (LinkPtr->Status == XLS_Connecting || XWBC_Peek(ChainPtr)) {
         return XL_AppendData(LinkPtr, DataPtr, Length);
