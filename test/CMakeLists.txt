@@ -32,4 +32,4 @@ endfunction()
 #sample lib:
 
 add_sub_test(indexed_storage)
-
+add_sub_test(ip_address)
