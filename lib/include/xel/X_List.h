@@ -88,7 +88,8 @@ X_STATIC_INLINE XelListForwardIterator XL_End(XelList * ListPtr)
 
 X_STATIC_INLINE XelListForwardIterator XLFI_Next(XelListForwardIterator Iter)
 {
-	return (XelListForwardIterator){ Iter.NextNodePtr, Iter.NextNodePtr->NextNodePtr };
+	XelListForwardIterator InitObject = { Iter.NextNodePtr, Iter.NextNodePtr->NextNodePtr };
+	return InitObject;
 }
 
 X_CNAME_END
