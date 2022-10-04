@@ -1,4 +1,4 @@
-project(sample_${libname} C)
+project(sample_${libname} C CXX)
 
 # local dependencies
 include_directories(
@@ -31,5 +31,6 @@ endfunction()
 
 #sample lib:
 
+add_sub_test(_cpp_compat)
 add_sub_test(indexed_storage)
 add_sub_test(ip_address)
