@@ -56,9 +56,8 @@ X_STATIC_INLINE void XLN_Replace(XelListNode * TargetPtr, XelListNode * By)
 	XLN_Init(TargetPtr);
 }
 
-X_STATIC_INLINE void XLN_Append(XelListNode * NodePtr, XelListNode * To) 
+X_STATIC_INLINE void XLN_AppendUnsafe(XelListNode * NodePtr, XelListNode * To) 
 {
-	assert(!X_UNLIKELY(XLN_IsLinked(NodePtr)));
 	XelListNode * Next = To->NextNodePtr;
 	To->NextNodePtr = NodePtr;
 	Next->PrevNodePtr = NodePtr;
@@ -66,10 +65,32 @@ X_STATIC_INLINE void XLN_Append(XelListNode * NodePtr, XelListNode * To)
 	NodePtr->NextNodePtr = Next;
 }
 
+X_STATIC_INLINE void XLN_Append(XelListNode * NodePtr, XelListNode * To) 
+{
+	assert(!X_UNLIKELY(XLN_IsLinked(NodePtr)));
+	XLN_AppendUnsafe(NodePtr, To);
+}
+
+X_STATIC_INLINE void XLN_InsertUnsafe(XelListNode * NodePtr, XelListNode * Before) 
+{
+	XLN_AppendUnsafe(NodePtr, Before->PrevNodePtr);
+}
+
+X_STATIC_INLINE void XLN_Insert(XelListNode * NodePtr, XelListNode * Before) 
+{
+	assert(!X_UNLIKELY(XLN_IsLinked(NodePtr)));
+	XLN_InsertUnsafe(NodePtr, Before);
+}
+
 // List header
 X_STATIC_INLINE void XL_Init(XelList * ListPtr) 
 {
 	XLN_Init(&ListPtr->Head);
+}
+
+X_STATIC_INLINE bool XL_IsEmpty(XelList * ListPtr) 
+{
+	return !XLN_IsLinked(&ListPtr->Head);
 }
 
 X_STATIC_INLINE XelListForwardIterator XL_Begin(XelList * ListPtr)
@@ -80,11 +101,43 @@ X_STATIC_INLINE XelListForwardIterator XL_Begin(XelList * ListPtr)
 
 X_STATIC_INLINE XelListForwardIterator XL_End(XelList * ListPtr)
 {
-	XelListForwardIterator InitObject = { &ListPtr->Head, ListPtr->Head.NextNodePtr };
+	XelListForwardIterator InitObject = { &ListPtr->Head, NULL };
 	return InitObject;
 }
 
+X_STATIC_INLINE void XL_AddHead(XelList * ListPtr, XelListNode * NodePtr)
+{
+	XLN_Append(NodePtr, &ListPtr->Head);
+}
+
+X_STATIC_INLINE void XL_GrabHead(XelList * ListPtr, XelListNode * NodePtr)
+{
+	XLN_DetachUnsafe(NodePtr);
+	XLN_AppendUnsafe(NodePtr, &ListPtr->Head);
+}
+
+X_STATIC_INLINE void XL_AddTail(XelList * ListPtr, XelListNode * NodePtr)
+{
+	XLN_Append(NodePtr, ListPtr->Head.PrevNodePtr);
+}
+
+X_STATIC_INLINE void XL_GrabTail(XelList * ListPtr, XelListNode * NodePtr)
+{
+	XLN_DetachUnsafe(NodePtr);
+	XLN_AppendUnsafe(NodePtr, ListPtr->Head.PrevNodePtr);
+}
+
 // forward iterator
+
+X_STATIC_INLINE bool XLFI_IsEqual(XelListForwardIterator IterPtr, XelListForwardIterator To)
+{
+	return IterPtr.CurrentNodePtr == To.CurrentNodePtr;
+}
+
+X_STATIC_INLINE XelListNode *XLFI_Get(XelListForwardIterator Iter) 
+{
+	return Iter.CurrentNodePtr;
+}
 
 X_STATIC_INLINE XelListForwardIterator XLFI_Next(XelListForwardIterator Iter)
 {
