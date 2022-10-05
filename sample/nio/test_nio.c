@@ -13,7 +13,7 @@ static const char * HttpRequest =
 "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8\r\n"
 "Accept-Language: en-US,en;q=0.5\r\n"
 "Accept-Encoding: gzip, deflate, br\r\n"
-"Connection: keep-alive\r\n"
+"Connection: close\r\n"
 "\r\n";
 
 int main(int argc, char * argv[])
@@ -24,7 +24,7 @@ int main(int argc, char * argv[])
 	XTC_PostData(&TcpConnection, HttpRequest, strlen(HttpRequest));
 
 	uint64_t StartTimer = X_GetTimestampMS();
-	while(X_GetTimestampMS() - StartTimer < 5000) {
+	while(X_GetTimestampMS() - StartTimer < 15000) {
 		XIC_LoopOnce(&IoContext, 1000);
 	}
 

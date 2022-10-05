@@ -58,6 +58,7 @@ static void XTC_EventCallback(XelIoEventBase * IoEventBasePtr, XelIoEventType Io
 				XS_Free(Hex);
 			}
 			if (Rb == 0) {
+				X_DbgInfo("PeerClose");
 				XTC_Close(TcpConnectionPtr);
 				return;
 			}
