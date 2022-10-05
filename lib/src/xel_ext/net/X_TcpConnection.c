@@ -9,17 +9,17 @@
 #else
 #endif
 
-static void XTC_FlushData(XelTcpConnection * ConnectionPtr)
+static void XTC_FlushData(XelTcpConnection * TcpConnectionPtr)
 {
-    assert(ConnectionPtr->Status == XTCS_Connected);
-    XelWriteBufferChain * ChainPtr = &ConnectionPtr->WriteBufferChain;
+    assert(TcpConnectionPtr->Status == XTCS_Connected);
+    XelWriteBufferChain * ChainPtr = &TcpConnectionPtr->WriteBufferChain;
 	while(true) {
 		XelWriteBuffer * BufferPtr = XWBC_Peek(ChainPtr);
 		if (!BufferPtr) {
 			return;
 		}
-		ssize_t WB = send(ConnectionPtr->Socket, BufferPtr->Buffer, (send_len_t)BufferPtr->BufferDataSize, XelNoWriteSignal);
-		X_DbgInfo("SendData: socket=%i, size=%zi", ConnectionPtr->Socket, (size_t)WB);
+		ssize_t WB = send(TcpConnectionPtr->Socket, BufferPtr->Buffer, (send_len_t)BufferPtr->BufferDataSize, XelNoWriteSignal);
+		X_DbgInfo("SendData: socket=%i, size=%zi", TcpConnectionPtr->Socket, (size_t)WB);
 		if (WB == BufferPtr->BufferDataSize) {
 			XWBC_FreeFront(ChainPtr);
 			continue;
@@ -27,13 +27,10 @@ static void XTC_FlushData(XelTcpConnection * ConnectionPtr)
 		if (WB < 0) {
 			X_DbgInfo("SendDataError: %s", strerror(errno));
 			if (errno != EAGAIN) {
-				XIEB_Unbind(&ConnectionPtr->IoEventBase);
-				close(ConnectionPtr->Socket);
-				ConnectionPtr->Socket = XelInvalidSocket;
-				ConnectionPtr->Status = XTCS_Closed;
+				XTC_Close(TcpConnectionPtr);
 				return;
 			}
-			XIEB_MarkWriting(&ConnectionPtr->IoEventBase);
+			XIEB_MarkWriting(&TcpConnectionPtr->IoEventBase);
 			break;
 		}
 		if ((size_t)WB < BufferPtr->BufferDataSize) {
@@ -47,51 +44,45 @@ static void XTC_FlushData(XelTcpConnection * ConnectionPtr)
 
 static void XTC_EventCallback(XelIoEventBase * IoEventBasePtr, XelIoEventType IoEventType)
 {
-	XelTcpConnection * ConnectionPtr = X_Entry(IoEventBasePtr, XelTcpConnection, IoEventBase);
+	XelTcpConnection * TcpConnectionPtr = X_Entry(IoEventBasePtr, XelTcpConnection, IoEventBase);
 
 #if defined (X_SYSTEM_LINUX)
 	if (IoEventType == XIET_In) {
 		X_DbgInfo("IoEventIn");
 		while(true) {
 			XelUByte Buffer[1024];
-    		ssize_t Rb = recv(ConnectionPtr->Socket, Buffer, (recv_len_t)sizeof(Buffer), 0);
+    		ssize_t Rb = recv(TcpConnectionPtr->Socket, Buffer, (recv_len_t)sizeof(Buffer), 0);
 			if (Rb > 0) {
 				XelString Hex = XS_HexShow(Buffer, Rb, true);
 				X_DbgInfo("RecvData: size=%zi, Hex=\n%s\n", Rb, XS_GetData(Hex));
 				XS_Free(Hex);
 			}
 			if (Rb == 0) {
-				XIEB_Unbind(&ConnectionPtr->IoEventBase);
-				close(ConnectionPtr->Socket);
-				ConnectionPtr->Socket = XelInvalidSocket;
-				ConnectionPtr->Status = XTCS_Closed;
+				XTC_Close(TcpConnectionPtr);
 				return;
 			}
 			if (Rb < 0) {
 				if (errno == EAGAIN) {
 					return;
 				}
-				XIEB_Unbind(&ConnectionPtr->IoEventBase);
-				close(ConnectionPtr->Socket);
-				ConnectionPtr->Socket = XelInvalidSocket;
-				ConnectionPtr->Status = XTCS_Closed;
+				XTC_Close(TcpConnectionPtr);
 				return;
 			}
 		}
 		return;
 	}
 	if (IoEventType == XIET_Out) {
-		if (ConnectionPtr->Status == XTCS_Connecting) {
-			ConnectionPtr->Status = XTCS_Connected;
+		if (TcpConnectionPtr->Status == XTCS_Connecting) {
+			TcpConnectionPtr->Status = XTCS_Connected;
 			X_DbgInfo("IoEventConnected");
 		}
-		XTC_FlushData(ConnectionPtr);
+		XTC_FlushData(TcpConnectionPtr);
 		return;
 	}
 	if (IoEventType == XIET_Err) {
-		close(ConnectionPtr->Socket);
-		ConnectionPtr->Socket = XelInvalidSocket;
-		ConnectionPtr->Status = XTCS_Closed;
+		close(TcpConnectionPtr->Socket);
+		TcpConnectionPtr->Socket = XelInvalidSocket;
+		TcpConnectionPtr->Status = XTCS_Closed;
 		X_DbgError("IoEvent");
 		return;
 	}
@@ -181,13 +172,21 @@ bool XTC_InitConnect(XelIoContext * IoContextPtr, XelTcpConnection * TcpConnecti
 	return true;
 }
 
+void XTC_Close(XelTcpConnection * TcpConnectionPtr)
+{
+	if (TcpConnectionPtr->Status == XTCS_Closed) {
+		return;
+	}
+	XIEB_Unbind(&TcpConnectionPtr->IoEventBase);
+	close(TcpConnectionPtr->Socket);
+	TcpConnectionPtr->Socket = XelInvalidSocket;
+	TcpConnectionPtr->Status = XTCS_Closed;
+}
+
 void XTC_Clean(XelTcpConnection * TcpConnectionPtr)
 {
 	if (TcpConnectionPtr->Status != XTCS_Closed) {
-		assert(TcpConnectionPtr->Socket != XelInvalidSocket);
-		close(TcpConnectionPtr->Socket);
-		TcpConnectionPtr->Socket = XelInvalidSocket;
-		TcpConnectionPtr->Status = XTCS_Closed;
+		XTC_Close(TcpConnectionPtr);
 	}
 	XIEB_Clean(&TcpConnectionPtr->IoEventBase);
 	XWBC_Clean(&TcpConnectionPtr->WriteBufferChain);

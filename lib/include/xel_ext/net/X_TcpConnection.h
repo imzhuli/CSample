@@ -26,6 +26,7 @@ struct XelTcpConnection
 };
 
 X_API bool    XTC_InitConnect(XelIoContext * IoContext, XelTcpConnection * TcpConnectionPtr, const char * IpString, uint16_t port);
+X_API void    XTC_Close(XelTcpConnection * TcpConnectionPtr);
 X_API void    XTC_Clean(XelTcpConnection * TcpConnectionPtr);
 X_API size_t  XTC_PostData(XelTcpConnection * TcpConntionPtr, const void * DataPtr, size_t Size);
 
