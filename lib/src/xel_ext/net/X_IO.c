@@ -45,10 +45,28 @@ void XIC_Clean(XelIoContext * ContextPtr)
     ContextPtr->EventPoller = XelInvalidEventPoller;
 }
 
+static void XIC_UpdateEvents(XelIoContext * ContextPtr, XelIoEventBase * EventBasePtr)
+{
+    uint32_t InterestedEvents = EPOLLET;
+    if (EventBasePtr->_EnableReadingEvent) {
+        InterestedEvents |= EPOLLIN;
+    }
+    if (EventBasePtr->_EnableWritingEvent) {
+        InterestedEvents |= EPOLLOUT;
+    }
+    if (X_UNLIKELY(EventBasePtr->_NativeRequiredEvents != InterestedEvents)) {
+        struct epoll_event Events = { .events = InterestedEvents, .data = { .ptr = EventBasePtr } };
+        if (-1 == epoll_ctl(ContextPtr->EventPoller, EPOLL_CTL_MOD, EventBasePtr->_IoHandle.FileDescriptor, &Events)) {
+            X_DbgError("Failed to change event : errno=%i, %s", errno, strerror(errno));
+        }
+        EventBasePtr->_NativeRequiredEvents = InterestedEvents;
+    }
+}
+
 void XIC_LoopOnce(XelIoContext * ContextPtr, int TimeoutMS)
 {
+    assert(!ContextPtr->ProcessingTargerPtr);
 #if defined(X_SYSTEM_LINUX)
-    XelEventPoller EventPoller = ContextPtr->EventPoller;
     struct epoll_event Events[LOOP_ONCE_MAX_EVENT_NUMBER];
     int Total = epoll_wait(ContextPtr->EventPoller, Events, LOOP_ONCE_MAX_EVENT_NUMBER, TimeoutMS);
     for(int i = 0 ; i < Total; ++i)
@@ -56,6 +74,7 @@ void XIC_LoopOnce(XelIoContext * ContextPtr, int TimeoutMS)
         struct epoll_event * EventPtr = &Events[i];
         XelIoEventBase * EventBasePtr = (XelIoEventBase *)EventPtr->data.ptr;
         XelIoEventCallback Callback = EventBasePtr->_EventCallback;
+        ContextPtr->ProcessingTargerPtr = EventBasePtr;
         if (EventPtr->events & (EPOLLERR | EPOLLHUP)) {
             XIEB_Unbind(EventBasePtr);
             if (Callback) {
@@ -79,25 +98,13 @@ void XIC_LoopOnce(XelIoContext * ContextPtr, int TimeoutMS)
             }
         }
         // update event flags:
-        uint32_t InterestedEvents = EPOLLET;
-        if (EventBasePtr->_EnableReadingEvent) {
-            InterestedEvents |= EPOLLIN;
-        }
-        if (EventBasePtr->_EnableWritingEvent) {
-            InterestedEvents |= EPOLLOUT;
-        }
-        if (X_UNLIKELY(EventBasePtr->_NativeRequiredEvents != InterestedEvents)) {
-            X_DbgInfo("Changed interested events to:%zx, Epoller=%i, IoHandle=%i", (size_t)InterestedEvents, EventPoller, EventBasePtr->_IoHandle.FileDescriptor );
-            struct epoll_event Events = { .events = InterestedEvents, .data = { .ptr = EventBasePtr } };
-            if (-1 == epoll_ctl(EventPoller, EPOLL_CTL_MOD, EventBasePtr->_IoHandle.FileDescriptor, &Events)) {
-                X_DbgError("Failed to change event : errno=%i, %s", errno, strerror(errno));
-            }
-            EventBasePtr->_NativeRequiredEvents = InterestedEvents;
-        }
+        XIC_UpdateEvents(ContextPtr, EventBasePtr);
     }
 #else
     X_FatalAbort("Not implemented");
 #endif
+
+    ContextPtr->ProcessingTargerPtr = NULL;
 }
 
 // utils
@@ -177,6 +184,10 @@ void XIEB_Unbind(XelIoEventBase * EventBasePtr)
 void XIEB_ResumeReading(XelIoEventBase * EventBasePtr)
 {
     EventBasePtr->_EnableReadingEvent = true;
+    if (!EventBasePtr->_IoContextPtr || XIC_IsProcessing(EventBasePtr->_IoContextPtr, EventBasePtr)) {
+        return;
+    }
+    XIC_UpdateEvents(EventBasePtr->_IoContextPtr, EventBasePtr);
 }
 
 X_API void XIEB_SuspendReading(XelIoEventBase * EventBasePtr)
@@ -187,4 +198,8 @@ X_API void XIEB_SuspendReading(XelIoEventBase * EventBasePtr)
 X_API void XIEB_MarkWriting(XelIoEventBase * EventBasePtr)
 {
     EventBasePtr->_EnableWritingEvent = true;
+    if (!EventBasePtr->_IoContextPtr || XIC_IsProcessing(EventBasePtr->_IoContextPtr, EventBasePtr)) {
+        return;
+    }
+    XIC_UpdateEvents(EventBasePtr->_IoContextPtr, EventBasePtr);
 }

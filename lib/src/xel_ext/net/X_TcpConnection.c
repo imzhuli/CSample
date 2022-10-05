@@ -1,5 +1,6 @@
 #include <xel_ext/net/X_TcpConnection.h>
 #include <xel_ext/net/X_IpAddress.h>
+#include <xel/X_String.h>
 #include <errno.h>
 
 #if defined(X_SYSTEM_LINUX)
@@ -8,6 +9,42 @@
 #else
 #endif
 
+static void XTC_FlushData(XelTcpConnection * ConnectionPtr)
+{
+    assert(ConnectionPtr->Status == XTCS_Connected);
+    XelWriteBufferChain * ChainPtr = &ConnectionPtr->WriteBufferChain;
+	while(true) {
+		XelWriteBuffer * BufferPtr = XWBC_Peek(ChainPtr);
+		if (!BufferPtr) {
+			return;
+		}
+		ssize_t WB = send(ConnectionPtr->Socket, BufferPtr->Buffer, (send_len_t)BufferPtr->BufferDataSize, XelNoWriteSignal);
+		X_DbgInfo("SendData: socket=%i, size=%zi", ConnectionPtr->Socket, (size_t)WB);
+		if (WB == BufferPtr->BufferDataSize) {
+			XWBC_FreeFront(ChainPtr);
+			continue;
+		}
+		if (WB < 0) {
+			X_DbgInfo("SendDataError: %s", strerror(errno));
+			if (errno != EAGAIN) {
+				XIEB_Unbind(&ConnectionPtr->IoEventBase);
+				close(ConnectionPtr->Socket);
+				ConnectionPtr->Socket = XelInvalidSocket;
+				ConnectionPtr->Status = XTCS_Closed;
+				return;
+			}
+			XIEB_MarkWriting(&ConnectionPtr->IoEventBase);
+			break;
+		}
+		if ((size_t)WB < BufferPtr->BufferDataSize) {
+			BufferPtr->BufferDataSize -= WB;
+			memmove(BufferPtr->Buffer, BufferPtr->Buffer + WB, BufferPtr->BufferDataSize);
+			break;
+		}
+	}
+
+}
+
 static void XTC_EventCallback(XelIoEventBase * IoEventBasePtr, XelIoEventType IoEventType)
 {
 	XelTcpConnection * ConnectionPtr = X_Entry(IoEventBasePtr, XelTcpConnection, IoEventBase);
@@ -15,6 +52,32 @@ static void XTC_EventCallback(XelIoEventBase * IoEventBasePtr, XelIoEventType Io
 #if defined (X_SYSTEM_LINUX)
 	if (IoEventType == XIET_In) {
 		X_DbgInfo("IoEventIn");
+		while(true) {
+			XelUByte Buffer[1024];
+    		ssize_t Rb = recv(ConnectionPtr->Socket, Buffer, (recv_len_t)sizeof(Buffer), 0);
+			if (Rb > 0) {
+				XelString Hex = XS_HexShow(Buffer, Rb, true);
+				X_DbgInfo("RecvData: size=%zi, Hex=\n%s\n", Rb, XS_GetData(Hex));
+				XS_Free(Hex);
+			}
+			if (Rb == 0) {
+				XIEB_Unbind(&ConnectionPtr->IoEventBase);
+				close(ConnectionPtr->Socket);
+				ConnectionPtr->Socket = XelInvalidSocket;
+				ConnectionPtr->Status = XTCS_Closed;
+				return;
+			}
+			if (Rb < 0) {
+				if (errno == EAGAIN) {
+					return;
+				}
+				XIEB_Unbind(&ConnectionPtr->IoEventBase);
+				close(ConnectionPtr->Socket);
+				ConnectionPtr->Socket = XelInvalidSocket;
+				ConnectionPtr->Status = XTCS_Closed;
+				return;
+			}
+		}
 		return;
 	}
 	if (IoEventType == XIET_Out) {
@@ -22,15 +85,13 @@ static void XTC_EventCallback(XelIoEventBase * IoEventBasePtr, XelIoEventType Io
 			ConnectionPtr->Status = XTCS_Connected;
 			X_DbgInfo("IoEventConnected");
 		}
-		else {
-			X_DbgInfo("IoEvenOut");
-		}
+		XTC_FlushData(ConnectionPtr);
 		return;
 	}
 	if (IoEventType == XIET_Err) {
-		ConnectionPtr->Status = XTCS_Closed;
 		close(ConnectionPtr->Socket);
 		ConnectionPtr->Socket = XelInvalidSocket;
+		ConnectionPtr->Status = XTCS_Closed;
 		X_DbgError("IoEvent");
 		return;
 	}
@@ -41,6 +102,11 @@ bool XTC_InitConnect(XelIoContext * IoContextPtr, XelTcpConnection * TcpConnecti
 {
 	TcpConnectionPtr->Socket = XelInvalidSocket;
 	TcpConnectionPtr->Status = XTCS_Closed;
+
+	if (!XWBC_Init(&TcpConnectionPtr->WriteBufferChain, NULL)) {
+		X_FatalAbort("Failed to write buffer chain");
+		return false;
+	}
 
 	XelInAddr  RemoteSinAddr = { 0 };
 	XelIn6Addr RemoteSin6Addr = { 0 };
@@ -55,6 +121,7 @@ bool XTC_InitConnect(XelIoContext * IoContextPtr, XelTcpConnection * TcpConnecti
 		int Fd = socket(AF_INET, SOCK_STREAM, 0);
 		if (-1 == Fd) {
 			XIEB_Clean(&TcpConnectionPtr->IoEventBase);
+			XWBC_Clean(&TcpConnectionPtr->WriteBufferChain);
 			return false;
 		}
 		XS_SetNonBlocking(Fd);
@@ -68,9 +135,11 @@ bool XTC_InitConnect(XelIoContext * IoContextPtr, XelTcpConnection * TcpConnecti
 				TcpConnectionPtr->Socket = XelInvalidSocket;
 				TcpConnectionPtr->Status = XTCS_Closed;
 				XIEB_Clean(EventBasePtr);
+				XWBC_Clean(&TcpConnectionPtr->WriteBufferChain);
 				return false;
 			}
 			X_DbgInfo("Connection to %s is inprogress, IoHandle=%i", IpString, Fd);
+			TcpConnectionPtr->Socket = Fd;
 			TcpConnectionPtr->Status = XTCS_Connecting;
 			XIEB_MarkWriting(EventBasePtr);
 
@@ -81,10 +150,12 @@ bool XTC_InitConnect(XelIoContext * IoContextPtr, XelTcpConnection * TcpConnecti
 				TcpConnectionPtr->Socket = XelInvalidSocket;
 				TcpConnectionPtr->Status = XTCS_Closed;
 				XIEB_Clean(EventBasePtr);
+				XWBC_Clean(&TcpConnectionPtr->WriteBufferChain);
 				return false;
 			}
 		}
 		else {
+			TcpConnectionPtr->Socket = Fd;
 			TcpConnectionPtr->Status = XTCS_Connected;
 			X_DbgInfo("Connection to %s is connected", IpString);
 		}
@@ -92,11 +163,13 @@ bool XTC_InitConnect(XelIoContext * IoContextPtr, XelTcpConnection * TcpConnecti
 	}
 	else if (X_StrToIpv6(&RemoteSin6Addr, IpString)) {
 		XIEB_Clean(EventBasePtr);
+		XWBC_Clean(&TcpConnectionPtr->WriteBufferChain);
 		X_FatalAbort("XTC_InitConnect ipv6 not supported");
 		return false;
 	}
 	else {
 		XIEB_Clean(&TcpConnectionPtr->IoEventBase);
+		XWBC_Clean(&TcpConnectionPtr->WriteBufferChain);
 		X_FatalAbort("XTC_InitConnect invalid ip type");
 		return false;
 	}
@@ -117,4 +190,41 @@ void XTC_Clean(XelTcpConnection * TcpConnectionPtr)
 		TcpConnectionPtr->Status = XTCS_Closed;
 	}
 	XIEB_Clean(&TcpConnectionPtr->IoEventBase);
+	XWBC_Clean(&TcpConnectionPtr->WriteBufferChain);
+}
+
+size_t XTC_PostData(XelTcpConnection * TcpConnectionPtr, const void * DataPtr_, size_t Size)
+{
+	assert(TcpConnectionPtr->Status != XTCS_Closed);
+	XelUByte * DataPtr = (XelUByte *)DataPtr_;
+	XelWriteBufferChain * WriteBufferChainPtr = &TcpConnectionPtr->WriteBufferChain;
+	if (XIEB_GetWritingMark(&TcpConnectionPtr->IoEventBase) || !XWBC_IsEmpty(WriteBufferChainPtr)) {
+		return XWBC_PushBack(WriteBufferChainPtr, DataPtr, Size);
+	}
+	// send
+#if defined (X_SYSTEM_LINUX)
+	ssize_t WB = send(TcpConnectionPtr->Socket, DataPtr, Size, XelNoWriteSignal);
+	X_DbgInfo("SendData: %zi", (size_t)WB);
+	if (WB < 0) {
+        if (errno != EAGAIN) {
+			XIEB_Unbind(&TcpConnectionPtr->IoEventBase);
+			close(TcpConnectionPtr->Socket);
+			TcpConnectionPtr->Socket = XelInvalidSocket;
+			TcpConnectionPtr->Status = XTCS_Closed;
+			return 0;
+		}
+	}
+	else {
+		DataPtr += WB;
+		Size -= WB;
+	}
+	if (Size) {
+		size_t Total = (size_t)WB + XWBC_PushBack(WriteBufferChainPtr, DataPtr, Size);
+		return Total;
+	}
+	return WB;
+#endif
+
+	X_FatalAbort("XTC_PostData not implemented");
+	return 0;
 }

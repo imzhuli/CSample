@@ -225,10 +225,10 @@ X_STATIC_INLINE void * X_Cast(void * MemberPtr, size_t MemberOffset)
 #define X_Entry(_MemberPtr, Type, Member) ((Type*)(X_Cast((_MemberPtr), offsetof(Type, Member))))
 
 X_API void X_RuntimeAssert(bool Assertion, const char * Message);
-X_API void X_FatalAbort(const char * Reason);
 X_STATIC_INLINE void X_Pass() {}
 
 #define X_RTA(x) X_RuntimeAssert((x), #x);
+X_API X_PRINTF_LIKE(1, 2) void X_FatalAbort(const char * fmt, ...);
 
 #ifndef NDEBUG
 X_API X_PRINTF_LIKE(1,2) void X_DbgInfo(const char * fmt, ...);
@@ -237,5 +237,12 @@ X_API X_PRINTF_LIKE(1,2) void X_DbgError(const char * fmt, ...);
 #define X_DbgInfo(fmt, ...)
 #define X_DbgError(fmt, ...)
 #endif
+
+typedef struct XelBufferView XelBufferView;
+struct XelBufferView
+{
+	XelUByte *   DataPtr;
+	size_t       Size;
+};
 
 X_CNAME_END

@@ -31,13 +31,18 @@ void X_RuntimeAssert(bool Assertion, const char * Message)
     }
 }
 
-void X_FatalAbort(const char * Reason)
+void X_FatalAbort(const char * fmt, ...)
 {
-    if (Reason) {
-        fprintf(stderr, "Program aborts on fatal error: %s\n", Reason);
+    if (!fmt) {
+        fprintf(stderr, "Program aborts on unknown fatal error\n");
     }
     else {
-        fprintf(stderr, "Program aborts on unknown fatal error\n");
+        va_list va;
+        va_start(va, fmt);
+        fprintf(stderr, "Error: ");
+        vfprintf(stderr, fmt, va);
+        fprintf(stderr, "\n");
+        va_end(va);
     }
     abort();
 }

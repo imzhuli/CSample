@@ -2,23 +2,7 @@
 
 bool XL_AppendData(XelLink * LinkPtr, const void * DataPtr, size_t DataSize)
 {
-    XelWriteBufferChain * ChainPtr = &LinkPtr->BufferChain;
-    const XelUByte * Cursor = DataPtr;
-    size_t RemainSize = DataSize;
-    while(RemainSize) {
-        XelWriteBuffer * BufferPtr = XWBC_Alloc(ChainPtr);
-        if (!BufferPtr) {
-            XL_SetError(LinkPtr);
-            return false;
-        }
-        size_t CopySize = RemainSize < XelPacketMaxSize ? RemainSize : XelPacketMaxSize;
-        memcpy(BufferPtr->Buffer, Cursor, CopySize);
-        BufferPtr->BufferDataSize = CopySize;
-        XWBC_Append(ChainPtr, BufferPtr);
-        Cursor += CopySize;
-        RemainSize -= CopySize;
-    }
-    return true;
+    return false;
 }
 
 bool XL_FlushData(XelLink * LinkPtr)

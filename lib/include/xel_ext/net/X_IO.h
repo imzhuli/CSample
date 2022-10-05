@@ -102,6 +102,7 @@ X_STATIC_INLINE XelIoHandle XIH_None() { XelIoHandle NoneObject = { XIT_Unknown 
 
 struct XelIoContext {
     XelEventPoller    EventPoller;
+    XelIoEventBase *  ProcessingTargerPtr;
     unsigned char     Reserved [16];
 };
 
@@ -119,10 +120,12 @@ struct XelIoEventBase {
 X_API bool XIC_Init(XelIoContext * ContextPtr);
 X_API void XIC_Clean(XelIoContext * ContextPtr);
 X_API void XIC_LoopOnce(XelIoContext * ContextPtr, int TimeoutMS);
+X_STATIC_INLINE bool XIC_IsProcessing(XelIoContext * ContextPtr, XelIoEventBase * EventBasePtr) { return ContextPtr->ProcessingTargerPtr == EventBasePtr; }
 
 X_API void XS_SetNonBlocking(XelSocket Sock);
 
-X_STATIC_INLINE XelIoContext * XIEB_GetIoContext(XelIoEventBase * EventBasePtr) { return EventBasePtr->_IoContextPtr; }
+X_STATIC_INLINE XelIoContext *   XIEB_GetIoContext(XelIoEventBase * EventBasePtr) { return EventBasePtr->_IoContextPtr; }
+X_STATIC_INLINE bool             XIEB_GetWritingMark(XelIoEventBase * EventBasePtr) { return EventBasePtr->_EnableWritingEvent; }
 X_API bool XIEB_Init(XelIoEventBase * EventBasePtr);
 X_API void XIEB_Clean(XelIoEventBase * EventBasePtr);
 X_API bool XIEB_Bind(XelIoContext * IoContextPtr, XelIoEventBase * EventBasePtr, XelIoHandle IoHandle, XelIoEventCallback Callback);
