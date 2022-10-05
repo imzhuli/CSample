@@ -15,6 +15,7 @@
     typedef int      recv_len_t;
     typedef HANDLE XelEventPoller;
     #define XelInvalidEventPoller      (INVALID_HANDLE_VALUE)
+    typedef XelVariable                XelNativeEventType
     typedef SOCKET XelSocket;
     #define XelInvalidSocket           (INVALID_SOCKET)
     #define XelCloseSocket(sockfd)     closesocket((sockfd))
@@ -30,8 +31,8 @@
     typedef size_t                     send_len_t;
     typedef size_t                     recv_len_t;
     typedef int                        XelEventPoller;        // epoll
-    typedef enum EPOLL_EVENTS          XelNativeEventType;    // EPOLLIN EPOLLOUT EPOLLERR ...
     #define XelInvalidEventPoller      ((XelEventPoller)-1)
+    typedef enum EPOLL_EVENTS          XelNativeEventType;    // EPOLLIN EPOLLOUT EPOLLERR ...
     typedef int XelSocket;
     #define XelInvalidSocket           ((XelSocket)-1)
     #define XelCloseSocket(sockfd)     close((sockfd))
