@@ -51,48 +51,48 @@ void XIC_LoopOnce(XelIoContext * ContextPtr, int TimeoutMS)
     XelEventPoller EventPoller = ContextPtr->EventPoller;
     struct epoll_event Events[LOOP_ONCE_MAX_EVENT_NUMBER];
     int Total = epoll_wait(ContextPtr->EventPoller, Events, LOOP_ONCE_MAX_EVENT_NUMBER, TimeoutMS);
-    for(int i = 0 ; i < Total; ++i) 
+    for(int i = 0 ; i < Total; ++i)
     {
         struct epoll_event * EventPtr = &Events[i];
         XelIoEventBase * EventBasePtr = (XelIoEventBase *)EventPtr->data.ptr;
+        XelIoEventCallback Callback = EventBasePtr->_EventCallback;
         if (EventPtr->events & (EPOLLERR | EPOLLHUP)) {
-            XelIoEventCallback Callback = EventBasePtr->_ErrorEventCallback;
             XIEB_Unbind(EventBasePtr);
             if (Callback) {
-                Callback(EventBasePtr, XIET_Err);
+                Callback(EventBasePtr, XIET_Err, EventBasePtr->_IoHandle);
             }
             continue;
         }
         if (EventPtr->events & EPOLLIN) {
-            XelIoEventCallback Callback = EventBasePtr->_InEventCallback;
-            assert(Callback);            
-            Callback(EventBasePtr, XIET_In);            
+            Callback(EventBasePtr, XIET_In, EventBasePtr->_IoHandle);
             // unbind called during procedure:
             if (!EventBasePtr->_IoContextPtr) {
                 continue;
             }
         }
         if (EventPtr->events & EPOLLOUT) {
-            XelIoEventCallback Callback = EventBasePtr->_OutEventCallback;
-            assert(Callback);            
-            Callback(EventBasePtr, XIET_Out);
+            EventBasePtr->_EnableWritingEvent = false;
+            Callback(EventBasePtr, XIET_Out, EventBasePtr->_IoHandle);
             // unbind called during procedure:
             if (!EventBasePtr->_IoContextPtr) {
                 continue;
             }
         }
         // update event flags:
-        struct epoll_event Events = { .events = EPOLLET };
-        if (X_LIKELY(EventBasePtr->_InEventCallback)) {
-            Events.events |= EPOLLIN;
+        uint32_t InterestedEvents = EPOLLET;
+        if (EventBasePtr->_EnableReadingEvent) {
+            InterestedEvents |= EPOLLIN;
         }
-        if (X_UNLIKELY(EventBasePtr->_OutEventCallback)) {
-            Events.events |= EPOLLOUT;
+        if (EventBasePtr->_EnableWritingEvent) {
+            InterestedEvents |= EPOLLOUT;
         }
-        if (X_UNLIKELY(EventBasePtr->_NativeRequiredEvents != Events.events)) {
-            EventBasePtr->_NativeRequiredEvents = Events.events;
-            Events.data.ptr = EventBasePtr;
-            epoll_ctl(EventPoller, EPOLL_CTL_MOD, EventBasePtr->_IoHandle.FileDescriptor, &Events);
+        if (X_UNLIKELY(EventBasePtr->_NativeRequiredEvents != InterestedEvents)) {
+            X_DbgInfo("Changed interested events to:%zx, Epoller=%i, IoHandle=%i", (size_t)InterestedEvents, EventPoller, EventBasePtr->_IoHandle.FileDescriptor );
+            struct epoll_event Events = { .events = InterestedEvents, .data = { .ptr = EventBasePtr } };
+            if (-1 == epoll_ctl(EventPoller, EPOLL_CTL_MOD, EventBasePtr->_IoHandle.FileDescriptor, &Events)) {
+                X_DbgError("Failed to change event : errno=%i, %s", errno, strerror(errno));
+            }
+            EventBasePtr->_NativeRequiredEvents = InterestedEvents;
         }
     }
 #else
@@ -117,11 +117,11 @@ void XS_SetNonBlocking(XelSocket Sock)
 
 // Event base support
 
-bool XIEB_Init(XelIoEventBase * EventBasePtr) 
+bool XIEB_Init(XelIoEventBase * EventBasePtr)
 {
-    XelIoEventBase InitObject = { NULL };  
-    *EventBasePtr = InitObject; 
-    return true; 
+    XelIoEventBase InitObject = { NULL };
+    *EventBasePtr = InitObject;
+    return true;
 }
 
 void XIEB_Clean(XelIoEventBase * EventBasePtr)
@@ -129,67 +129,64 @@ void XIEB_Clean(XelIoEventBase * EventBasePtr)
     if (EventBasePtr->_IoContextPtr) {
         XIEB_Unbind(EventBasePtr);
     }
-    XelIoEventBase CleanObject = { NULL };  
-    *EventBasePtr = CleanObject; 
+    XelIoEventBase CleanObject = { NULL };
+    *EventBasePtr = CleanObject;
 }
 
-void XIEB_Bind(XelIoContext * IoContextPtr, XelIoEventBase * EventBasePtr)
+bool XIEB_Bind(XelIoContext * IoContextPtr, XelIoEventBase * EventBasePtr, XelIoHandle IoHandle, XelIoEventCallback Callback)
 {
     assert(!EventBasePtr->_IoContextPtr);
+    assert(EventBasePtr->_IoHandle.IoType == XIT_Unknown);
+    assert(Callback);
 #if defined(X_SYSTEM_LINUX)
     assert(!EventBasePtr->_NativeRequiredEvents);
-    struct epoll_event Events = { .events = EPOLLET };
-    if (EventBasePtr->_InEventCallback) {
-        Events.events |= EPOLLIN;
+    uint32_t InterestedEvents = EPOLLET;
+    if (EventBasePtr->_EnableReadingEvent) {
+        InterestedEvents |= EPOLLIN;
     }
-    if (EventBasePtr->_OutEventCallback) {
-        Events.events |= EPOLLOUT;
+    if (EventBasePtr->_EnableWritingEvent) {
+        InterestedEvents |= EPOLLOUT;
     }
-    EventBasePtr->_NativeRequiredEvents = Events.events;
-    Events.data.ptr = EventBasePtr;
-    if (-1 == epoll_ctl(IoContextPtr->EventPoller, EPOLL_CTL_ADD, EventBasePtr->_IoHandle.FileDescriptor, &Events)) {
-        X_FatalAbort(strerror(errno));
+    struct epoll_event Events = { .events = InterestedEvents, .data = { .ptr = EventBasePtr } };
+    if (-1 == epoll_ctl(IoContextPtr->EventPoller, EPOLL_CTL_ADD, IoHandle.FileDescriptor, &Events)) {
+        return false;
     }
 #endif
     EventBasePtr->_IoContextPtr = IoContextPtr;
+    EventBasePtr->_EventCallback = Callback;
+    EventBasePtr->_IoHandle = IoHandle;
+    EventBasePtr->_NativeRequiredEvents = InterestedEvents;
+    return true;
 }
 
 void XIEB_Unbind(XelIoEventBase * EventBasePtr)
 {
     XelIoContext * IoContextPtr = EventBasePtr->_IoContextPtr;
     if (!IoContextPtr) { // duplicate unbind is allowed
-        return; 
+        return;
     }
-#if defined(X_SYSTEM_LINUX)  
+#if defined(X_SYSTEM_LINUX)
     epoll_ctl(IoContextPtr->EventPoller, EPOLL_CTL_DEL, EventBasePtr->_IoHandle.FileDescriptor, NULL);
     EventBasePtr->_NativeRequiredEvents = 0;
 #else
     X_FatalAbort("Not implemented");
 #endif
     EventBasePtr->_IoContextPtr = NULL;
-    EventBasePtr->_InEventCallback = NULL;
-    EventBasePtr->_OutEventCallback = NULL;
-    EventBasePtr->_ErrorEventCallback = NULL;
+    EventBasePtr->_IoHandle = XIH_None();
+    EventBasePtr->_EventCallback = NULL;
 }
 
-void XIEB_ResumeReading(XelIoEventBase * EventBasePtr, XelIoEventCallback Callback)
+void XIEB_ResumeReading(XelIoEventBase * EventBasePtr)
 {
-    assert(Callback);
-    EventBasePtr->_InEventCallback = Callback;
+    EventBasePtr->_EnableReadingEvent = true;
 }
 
 X_API void XIEB_SuspendReading(XelIoEventBase * EventBasePtr)
 {
-    EventBasePtr->_InEventCallback = NULL;
+    EventBasePtr->_EnableReadingEvent = false;
 }
 
-X_API void XIEB_MarkWriting(XelIoEventBase * EventBasePtr, XelIoEventCallback Callback)
+X_API void XIEB_MarkWriting(XelIoEventBase * EventBasePtr)
 {
-    assert(Callback);
-    EventBasePtr->_OutEventCallback = Callback;
-}
-
-void XIEB_SetErrorCallback(XelIoEventBase * EventBasePtr, XelIoEventCallback Callback)
-{
-    EventBasePtr->_ErrorEventCallback = Callback;
+    EventBasePtr->_EnableWritingEvent = true;
 }

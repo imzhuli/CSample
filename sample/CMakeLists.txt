@@ -26,6 +26,7 @@ endfunction()
 #sample lib:
 
 add_sub_sample(hello_world)
+add_sub_sample(nio)
 
 install(TARGETS
 	sample_hello_world

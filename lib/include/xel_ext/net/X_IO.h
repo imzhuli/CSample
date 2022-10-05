@@ -69,7 +69,7 @@
 X_CNAME_BEGIN
 
 enum XelIoType {
-    XIT_Unknown,
+    XIT_Unknown = 0,
     XIT_File,
     XIT_Socket,
 };
@@ -77,6 +77,9 @@ enum XelIoEventType {
     XIET_Err,
     XIET_In,
     XIET_Out,
+    XIET_IOCP_ReadComplete,
+    XIET_IOCP_WriteComplete,
+    XIET_IOCP_Error,
 };
 typedef enum     XelIoType        XelIoType;
 typedef enum     XelIoEventType   XelIoEventType;
@@ -84,7 +87,8 @@ typedef struct   XelIoHandle      XelIoHandle;
 typedef struct   XelIoContext     XelIoContext;
 typedef struct   XelIoEventBase   XelIoEventBase;
 
-typedef void (*XelIoEventCallback)(XelIoEventBase * IoEventBasePtr, XelIoEventType IoEventType);
+typedef void (*XelIoEventCallback)(XelIoEventBase * IoEventBasePtr, XelIoEventType IoEventType, XelIoHandle IoHandle);
+typedef void (*XelIoEventIOCPCallback)(XelIoEventBase * IoEventBasePtr, XelIoEventType IoEventType, XelIoHandle IoHandle, size_t NumberOfBytesTransferred, void * NativeContext);
 
 struct XelIoHandle
 {
@@ -94,6 +98,7 @@ struct XelIoHandle
         int           FileDescriptor;
     };
 };
+X_STATIC_INLINE XelIoHandle XIH_None() { XelIoHandle NoneObject = { XIT_Unknown }; return NoneObject; }
 
 struct XelIoContext {
     XelEventPoller    EventPoller;
@@ -105,9 +110,9 @@ struct XelIoEventBase {
     XelIoContext *        _IoContextPtr;
     XelIoHandle           _IoHandle;
     XelNativeEventType    _NativeRequiredEvents;
-    XelIoEventCallback    _InEventCallback;
-    XelIoEventCallback    _OutEventCallback;
-    XelIoEventCallback    _ErrorEventCallback;
+    XelIoEventCallback    _EventCallback;
+    bool                  _EnableReadingEvent;
+    bool                  _EnableWritingEvent;
     unsigned char         _Reserved [16];
 };
 
@@ -117,13 +122,13 @@ X_API void XIC_LoopOnce(XelIoContext * ContextPtr, int TimeoutMS);
 
 X_API void XS_SetNonBlocking(XelSocket Sock);
 
+X_STATIC_INLINE XelIoContext * XIEB_GetIoContext(XelIoEventBase * EventBasePtr) { return EventBasePtr->_IoContextPtr; }
 X_API bool XIEB_Init(XelIoEventBase * EventBasePtr);
 X_API void XIEB_Clean(XelIoEventBase * EventBasePtr);
-X_API void XIEB_Bind(XelIoContext * IoContextPtr, XelIoEventBase * EventBasePtr);
+X_API bool XIEB_Bind(XelIoContext * IoContextPtr, XelIoEventBase * EventBasePtr, XelIoHandle IoHandle, XelIoEventCallback Callback);
 X_API void XIEB_Unbind(XelIoEventBase * EventBasePtr);
-X_API void XIEB_ResumeReading(XelIoEventBase * EventBasePtr, XelIoEventCallback Callback);
+X_API void XIEB_ResumeReading(XelIoEventBase * EventBasePtr);
 X_API void XIEB_SuspendReading(XelIoEventBase * EventBasePtr);
-X_API void XIEB_MarkWriting(XelIoEventBase * EventBasePtr, XelIoEventCallback Callback);
-X_API void XIEB_SetErrorCallback(XelIoEventBase * EventBasePtr, XelIoEventCallback Callback);
+X_API void XIEB_MarkWriting(XelIoEventBase * EventBasePtr);
 
 X_CNAME_END
