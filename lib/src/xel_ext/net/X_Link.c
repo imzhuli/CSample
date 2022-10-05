@@ -1,45 +1,5 @@
 #include <xel_ext/net/X_Link.h>
 
-#ifdef MSG_NOSIGNAL
-    #define XelNoWriteSignal       MSG_NOSIGNAL
-#else
-    #define XelNoWriteSignal       0
-#endif
-
-#ifdef X_SYSTEM_WINDOWS
-    typedef SSIZE_T  ssize_t;
-    typedef int      send_len_t;
-    typedef int      recv_len_t;
-#else
-    typedef size_t  send_len_t;
-    typedef size_t  recv_len_t;
-#endif
-
-#ifndef SOCK_CLOEXEC
-    #define SOCK_CLOEXEC 0
-#endif
-
-bool XL_Init(XelLink * LinkPtr)
-{
-    LinkPtr->Status = XLS_Idle;
-    LinkPtr->Flags = 0;
-    LinkPtr->SocketFd = XelInvalidSocket;
-    LinkPtr->ReadBufferDataSize = 0;
-    LinkPtr->BufferChain = XWBC_Init(NULL);
-    return true;
-}
-
-void XL_Clean(XelLink * LinkPtr)
-{
-    if (LinkPtr->SocketFd != XelInvalidSocket) {
-        XelCloseSocket(LinkPtr->SocketFd);
-        LinkPtr->SocketFd = XelInvalidSocket;
-    }
-    LinkPtr->ReadBufferDataSize = 0;
-    XWBC_Clean(&LinkPtr->BufferChain);
-    LinkPtr->Status = XLS_Idle;
-}
-
 bool XL_AppendData(XelLink * LinkPtr, const void * DataPtr, size_t DataSize)
 {
     XelWriteBufferChain * ChainPtr = &LinkPtr->BufferChain;

@@ -22,9 +22,11 @@ function(add_sub_test sub_dir_name)
 if (X_OPTION_STATIC)
 	target_compile_definitions(test_${sub_dir_name} PRIVATE X_OPTION_STATIC)
 endif()
+	set(extra_args ${ARGV})
+	list(POP_FRONT extra_args)
 	add_test(
 		NAME	test_${sub_dir_name}
-		COMMAND test_${sub_dir_name}
+		COMMAND test_${sub_dir_name} ${extra_args}
 		WORKING_DIRECTORY  ${CMAKE_SOURCE_DIR}
 		)
 endfunction()
@@ -32,6 +34,7 @@ endfunction()
 #sample lib:
 
 add_sub_test(_cpp_compat)
+add_sub_test(getopt -a "yes" -bc "check" -- "comma-error" -c "again")
 add_sub_test(indexed_storage)
 add_sub_test(ip_address)
 add_sub_test(list)

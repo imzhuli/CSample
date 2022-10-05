@@ -184,8 +184,7 @@ union XelVariable
 	XelUByte                      B[8];
 
 	void *                        Ptr;
-	const void *                  CstPtr;
-	const char *                  Str;
+	const void *                  ConstPtr;
 
 	ptrdiff_t                     Offset;
 	size_t                        Size;
@@ -201,8 +200,8 @@ union XelVariable
 	uint32_t                      U32;
 	uint64_t                      U64;
 
-	struct { int32_t  x, y; }     VI32;
-	struct { uint32_t x, y; }     VU32;
+	struct { int32_t  x, y; }     IV2;
+	struct { uint32_t x, y; }     UV32;
 };
 X_STATIC_INLINE XelVariable XV_Zero() { XelVariable InitObject = {{0}}; return InitObject; }
 
@@ -224,5 +223,7 @@ X_STATIC_INLINE void * X_Cast(void * MemberPtr, size_t MemberOffset)
     return (void*)((unsigned char*)MemberPtr - MemberOffset);
 }
 #define X_Entry(_MemberPtr, Type, Member) ((Type*)(X_Cast((_MemberPtr), offsetof(Type, Member))))
+
+X_API void X_FatalAbort(const char * Reason);
 
 X_CNAME_END

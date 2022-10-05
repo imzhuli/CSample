@@ -61,9 +61,6 @@ X_PRIVATE bool XL_WriteEventCallback(void * CtxPtr, XelLink* LinkPtr);
 X_PRIVATE void XL_ErrorEventCallback(void * CtxPtr, XelLink* LinkPtr);
 X_PRIVATE void XL_OnSetClose(void * CtxPtr, XelLink* LinkPtr);
 
-
-X_API bool XL_Init(XelLink * LinkPtr);
-X_API void XL_Clean(XelLink * LinkPtr);
 X_API bool XL_AppendData(XelLink * LinkPtr, const void * DataPtr, size_t DataSize);
 X_API bool XL_FlushData(XelLink * LinkPtr);
 
