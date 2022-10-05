@@ -15,7 +15,7 @@
     typedef int      recv_len_t;
     typedef HANDLE XelEventPoller;
     #define XelInvalidEventPoller      (INVALID_HANDLE_VALUE)
-    typedef XelVariable                XelNativeEventType
+    typedef XelVariable                XelNativeEventType;
     typedef SOCKET XelSocket;
     #define XelInvalidSocket           (INVALID_SOCKET)
     #define XelCloseSocket(sockfd)     closesocket((sockfd))
