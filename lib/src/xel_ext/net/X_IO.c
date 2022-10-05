@@ -96,7 +96,7 @@ void XIC_LoopOnce(XelIoContext * ContextPtr, int TimeoutMS)
         }
     }
 #else
-    #warning "not implemented yet"
+    X_FatalAbort("Not implemented");
 #endif
 }
 
@@ -164,7 +164,7 @@ void XIEB_Unbind(XelIoEventBase * EventBasePtr)
     epoll_ctl(IoContextPtr->EventPoller, EPOLL_CTL_DEL, EventBasePtr->_IoHandle.FileDescriptor, NULL);
     EventBasePtr->_NativeRequiredEvents = 0;
 #else
-    #warning "not implemented yet"
+    X_FatalAbort("Not implemented");
 #endif
     EventBasePtr->_IoContextPtr = NULL;
     EventBasePtr->_InEventCallback = NULL;
