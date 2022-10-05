@@ -59,12 +59,12 @@ void XIC_LoopOnce(XelIoContext * ContextPtr, int TimeoutMS)
         if (EventPtr->events & (EPOLLERR | EPOLLHUP)) {
             XIEB_Unbind(EventBasePtr);
             if (Callback) {
-                Callback(EventBasePtr, XIET_Err, EventBasePtr->_IoHandle);
+                Callback(EventBasePtr, XIET_Err);
             }
             continue;
         }
         if (EventPtr->events & EPOLLIN) {
-            Callback(EventBasePtr, XIET_In, EventBasePtr->_IoHandle);
+            Callback(EventBasePtr, XIET_In);
             // unbind called during procedure:
             if (!EventBasePtr->_IoContextPtr) {
                 continue;
@@ -72,7 +72,7 @@ void XIC_LoopOnce(XelIoContext * ContextPtr, int TimeoutMS)
         }
         if (EventPtr->events & EPOLLOUT) {
             EventBasePtr->_EnableWritingEvent = false;
-            Callback(EventBasePtr, XIET_Out, EventBasePtr->_IoHandle);
+            Callback(EventBasePtr, XIET_Out);
             // unbind called during procedure:
             if (!EventBasePtr->_IoContextPtr) {
                 continue;
@@ -126,9 +126,7 @@ bool XIEB_Init(XelIoEventBase * EventBasePtr)
 
 void XIEB_Clean(XelIoEventBase * EventBasePtr)
 {
-    if (EventBasePtr->_IoContextPtr) {
-        XIEB_Unbind(EventBasePtr);
-    }
+    assert(!EventBasePtr->_IoContextPtr);
     XelIoEventBase CleanObject = { NULL };
     *EventBasePtr = CleanObject;
 }

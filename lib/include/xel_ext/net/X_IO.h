@@ -87,7 +87,7 @@ typedef struct   XelIoHandle      XelIoHandle;
 typedef struct   XelIoContext     XelIoContext;
 typedef struct   XelIoEventBase   XelIoEventBase;
 
-typedef void (*XelIoEventCallback)(XelIoEventBase * IoEventBasePtr, XelIoEventType IoEventType, XelIoHandle IoHandle);
+typedef void (*XelIoEventCallback)(XelIoEventBase * IoEventBasePtr, XelIoEventType IoEventType);
 typedef void (*XelIoEventIOCPCallback)(XelIoEventBase * IoEventBasePtr, XelIoEventType IoEventType, XelIoHandle IoHandle, size_t NumberOfBytesTransferred, void * NativeContext);
 
 struct XelIoHandle

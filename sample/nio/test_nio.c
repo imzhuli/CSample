@@ -16,6 +16,7 @@ int main(int argc, char * argv[])
 		XIC_LoopOnce(&IoContext, 1000);
 	}
 
+	XTC_Clean(&TcpConnection);
 	XIC_Clean(&IoContext);
 	return 0;
 }

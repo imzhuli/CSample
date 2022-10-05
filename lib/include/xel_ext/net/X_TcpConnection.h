@@ -6,10 +6,9 @@ X_CNAME_BEGIN
 
 enum XelTcpConnectionStatus
 {
-	XTCS_Idle,
+	XTCS_Closed,
 	XTCS_Connecting,
 	XTCS_Connected,
-	XTCS_Closed,
 };
 typedef enum XelTcpConnectionStatus XelTcpConnectionStatus;
 
@@ -17,6 +16,7 @@ typedef struct XelTcpConnection XelTcpConnection;
 struct XelTcpConnection
 {
 	XelIoEventBase          IoEventBase;
+	XelSocket               Socket;
 	XelTcpConnectionStatus  Status;
 };
 

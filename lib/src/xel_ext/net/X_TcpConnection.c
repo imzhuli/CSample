@@ -8,7 +8,7 @@
 #else
 #endif
 
-static void XTC_EventCallback(XelIoEventBase * IoEventBasePtr, XelIoEventType IoEventType, XelIoHandle IoHandle)
+static void XTC_EventCallback(XelIoEventBase * IoEventBasePtr, XelIoEventType IoEventType)
 {
 	XelTcpConnection * ConnectionPtr = X_Entry(IoEventBasePtr, XelTcpConnection, IoEventBase);
 
@@ -29,7 +29,8 @@ static void XTC_EventCallback(XelIoEventBase * IoEventBasePtr, XelIoEventType Io
 	}
 	if (IoEventType == XIET_Err) {
 		ConnectionPtr->Status = XTCS_Closed;
-		close(IoHandle.FileDescriptor);
+		close(ConnectionPtr->Socket);
+		ConnectionPtr->Socket = XelInvalidSocket;
 		X_DbgError("IoEvent");
 		return;
 	}
@@ -38,6 +39,9 @@ static void XTC_EventCallback(XelIoEventBase * IoEventBasePtr, XelIoEventType Io
 
 bool XTC_InitConnect(XelIoContext * IoContextPtr, XelTcpConnection * TcpConnectionPtr, const char * IpString, uint16_t Port)
 {
+	TcpConnectionPtr->Socket = XelInvalidSocket;
+	TcpConnectionPtr->Status = XTCS_Closed;
+
 	XelInAddr  RemoteSinAddr = { 0 };
 	XelIn6Addr RemoteSin6Addr = { 0 };
 	XelIoEventBase * EventBasePtr = &TcpConnectionPtr->IoEventBase;
@@ -60,6 +64,9 @@ bool XTC_InitConnect(XelIoContext * IoContextPtr, XelTcpConnection * TcpConnecti
 		Sockaddr.sin_port = htons(Port);
 		if (-1 == connect(Fd, (struct sockaddr*)&Sockaddr, (socklen_t)sizeof(Sockaddr))) {
 			if (errno != EINPROGRESS) {
+				close(TcpConnectionPtr->Socket);
+				TcpConnectionPtr->Socket = XelInvalidSocket;
+				TcpConnectionPtr->Status = XTCS_Closed;
 				XIEB_Clean(EventBasePtr);
 				return false;
 			}
@@ -70,6 +77,9 @@ bool XTC_InitConnect(XelIoContext * IoContextPtr, XelTcpConnection * TcpConnecti
 			XelIoHandle IoHandle = { .IoType = XIT_Socket, .FileDescriptor = Fd };
 			if (!XIEB_Bind(IoContextPtr, EventBasePtr, IoHandle, XTC_EventCallback)) {
 				X_DbgError("Failed to bind IoEventBase to IoContext");
+				close(TcpConnectionPtr->Socket);
+				TcpConnectionPtr->Socket = XelInvalidSocket;
+				TcpConnectionPtr->Status = XTCS_Closed;
 				XIEB_Clean(EventBasePtr);
 				return false;
 			}
@@ -100,6 +110,11 @@ bool XTC_InitConnect(XelIoContext * IoContextPtr, XelTcpConnection * TcpConnecti
 
 void XTC_Clean(XelTcpConnection * TcpConnectionPtr)
 {
+	if (TcpConnectionPtr->Status != XTCS_Closed) {
+		assert(TcpConnectionPtr->Socket != XelInvalidSocket);
+		close(TcpConnectionPtr->Socket);
+		TcpConnectionPtr->Socket = XelInvalidSocket;
+		TcpConnectionPtr->Status = XTCS_Closed;
+	}
 	XIEB_Clean(&TcpConnectionPtr->IoEventBase);
-
 }
