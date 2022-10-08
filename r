@@ -10,7 +10,7 @@ fi
 
 while :
 do
-    if [ -z ${1+x} ]; then
+    if [ -z $s1 ]; then
         break;
     fi
 

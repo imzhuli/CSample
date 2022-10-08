@@ -115,6 +115,7 @@ bool XTC_InitConnect(XelIoContext * IoContextPtr, XelTcpConnection * TcpConnecti
 	TcpConnectionPtr->_Socket = XelInvalidSocket;
 	TcpConnectionPtr->_Status = XTCS_Closed;
 
+	TcpConnectionPtr->_ReadDataSize = 0;
 	if (!XWBC_Init(&TcpConnectionPtr->_WriteBufferChain, NULL)) {
 		X_FatalAbort("Failed to write buffer chain");
 		return false;
@@ -203,6 +204,7 @@ void XTC_Close(XelTcpConnection * TcpConnectionPtr)
 	close(TcpConnectionPtr->_Socket);
 	TcpConnectionPtr->_Socket = XelInvalidSocket;
 	TcpConnectionPtr->_Status = XTCS_Closed;
+	TcpConnectionPtr->_ReadDataSize = 0;
 }
 
 void XTC_Clean(XelTcpConnection * TcpConnectionPtr)

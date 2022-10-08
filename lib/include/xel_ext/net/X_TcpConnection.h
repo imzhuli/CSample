@@ -31,6 +31,7 @@ struct XelTcpConnection
 	XelTcpConnectionStatus    _Status;
 
 	XelUByte                  _ReadBuffer[XelPacketMaxSize]; // at least of sizeof a full packet
+	size_t                    _ReadDataSize;
 	XelWriteBufferChain       _WriteBufferChain;
 	XelTcpConnectionListener  _EventListener;
 };
