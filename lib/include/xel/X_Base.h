@@ -245,4 +245,6 @@ struct XelBufferView
 	size_t       Size;
 };
 
+#define XEL_HANDLE struct{void*__PlaceHolder__;}*
+
 X_CNAME_END

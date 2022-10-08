@@ -28,6 +28,7 @@ set(shared_lib_dependency_public
 
 # source files:
 aux_source_directory(./src/xel                          X_SRC)
+aux_source_directory(./src/xel/Util                     X_SRC)
 aux_source_directory(./src/xel_ext/net                  X_SRC)
 
 # 3rd party
