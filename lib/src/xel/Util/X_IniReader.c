@@ -162,7 +162,7 @@ static void XIR_IniSort(__IniContent__ * vhIni)
     vhIni->xLineCount = vhLine - vhIni->pLines + 1;
 }
 
-static __IniContent__ * XIR_IniRead(const char * filename)
+static __IniContent__ * XIR_New(const char * filename)
 {
     FILE * fp = fopen(filename, "rb");
     size_t vxFileSize = 0;
@@ -230,7 +230,7 @@ X_STATIC_INLINE const char * XIR_IniGet(const __IniContent__ * vhIni, const char
     return vhLine->hValueStart;
 }
 
-X_STATIC_INLINE void XIR_IniFree(__IniContent__ * vhIni)
+X_STATIC_INLINE void XIR_Delete(__IniContent__ * vhIni)
 {
     if (vhIni->pLines) {
         free(vhIni->pLines);
@@ -246,8 +246,7 @@ XelIniReader XIR_Init(const char * IniFilename)
 void XIR_Clean(XelIniReader Reader)
 {
     assert(Reader);
-    XIR_IniFree((__IniContent__*)Reader);
-
+    XIR_Delete((__IniContent__*)Reader);
 }
 
 const char * XIR_Get(XelIniReader Reader, const char * Key)
