@@ -6,7 +6,7 @@
 #define XelPacketMagicValue          ((size_t)(0xCD000000))
 #define XelPacketLengthMask          ((size_t)(0x00FFFFFF))
 #define XelPacketMaxSize             ((size_t)(4096 & XelPacketLengthMask))
-#define XelMaxPacketPayloadSize      ((size_t)(XelMaxPacketPacketSize - XelPacketHeaderSize))
+#define XelPacketMaxPayloadSize      ((size_t)(XelPacketMaxSize - XelPacketHeaderSize))
 
 X_CNAME_BEGIN
 
