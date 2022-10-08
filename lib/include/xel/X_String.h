@@ -16,7 +16,7 @@ extern XelString      XS_Duplicate(XelString Str);
 extern XelString      XS_NewData(const char * SourcePtr, size_t Length);
 extern XelString      XS_NewString(const char * StringPtr);
 extern void           XS_Clear(XelString Str);
-extern void           XS_Free(XelString Str);
+extern void           XS_Delete(XelString Str);
 extern const char *   XS_GetData(XelString Str);
 extern size_t         XS_GetLength(XelString Str);
 extern void           XS_SetData(XelString Str, const char * SourcePtr, size_t Length);

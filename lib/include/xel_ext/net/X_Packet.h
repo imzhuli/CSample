@@ -20,6 +20,6 @@ typedef struct XelPacketHeader {
 } XelPacketHeader;
 
 X_API size_t XPH_Read(XelPacketHeader * HeaderPtr, const void * SourcePtr);
-X_API void   XPH_Write(void * DestPtr, const XelPacketHeader * HeaderPtr);
+X_API void   XPH_Write(const XelPacketHeader * HeaderPtr, void * DestPtr);
 
 X_CNAME_END

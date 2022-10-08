@@ -52,7 +52,7 @@ void XS_Clear(XelString Str)
     RealPtr->DataPtr[RealPtr->DataLength = 0] = '\0';
 }
 
-void XS_Free(XelString Str)
+void XS_Delete(XelString Str)
 {
     __XelString* RealPtr = (__XelString *)Str;
     if (RealPtr->DataPtr != RealPtr->InnerBuffer) {
@@ -200,7 +200,7 @@ XelString XS_HexShow(const void * DataPtr, size_t Length, bool NeedHeader)
             , f);
     XS_AppendString(h, "  ");
     XS_Append(h, p);
-    XS_Free(p);
+    XS_Delete(p);
     return h;
 }
 
@@ -212,7 +212,7 @@ void XS_PrintHexShow(FILE * stream, const void * DataPtr, size_t Length, bool Ne
     }
     fprintf(stream, "%s\n", XS_GetData(S));
     fflush(stream);
-    XS_Free(S);
+    XS_Delete(S);
 }
 
 static const char CTBL[256] =

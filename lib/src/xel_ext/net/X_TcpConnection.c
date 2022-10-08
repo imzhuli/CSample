@@ -55,7 +55,7 @@ static void XTC_EventCallback(XelIoEventBase * IoEventBasePtr, XelIoEventType Io
 			if (Rb > 0) {
 				XelString Hex = XS_HexShow(Buffer, Rb, true);
 				X_DbgInfo("RecvData: size=%zi, Hex=\n%s\n", Rb, XS_GetData(Hex));
-				XS_Free(Hex);
+				XS_Delete(Hex);
 			}
 			if (Rb == 0) {
 				X_DbgInfo("PeerClose");
