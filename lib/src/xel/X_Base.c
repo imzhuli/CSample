@@ -7,7 +7,7 @@ void X_DbgInfo(const char * fmt, ...)
 {
 	va_list va;
 	va_start(va, fmt);
-	fprintf(stdout, "Debug: ");
+	fprintf(stdout, "Debug-Info: ");
 	vfprintf(stdout, fmt, va);
 	fprintf(stdout, "\n");
 	va_end(va);
@@ -16,7 +16,7 @@ void X_DbgError(const char * fmt, ...)
 {
 	va_list va;
 	va_start(va, fmt);
-	fprintf(stdout, "Error: ");
+	fprintf(stdout, "Debug-Error: ");
 	vfprintf(stdout, fmt, va);
 	fprintf(stdout, "\n");
 	va_end(va);

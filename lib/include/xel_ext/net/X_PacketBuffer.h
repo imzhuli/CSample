@@ -55,7 +55,7 @@ X_STATIC_INLINE void XWBC_Free(XelWriteBufferChain * ChainPtr, XelWriteBuffer * 
 
 X_STATIC_INLINE bool XWBC_IsEmpty(XelWriteBufferChain * ChainPtr)
 {
-    return ChainPtr->FirstPtr;
+    return !ChainPtr->FirstPtr;
 }
 
 X_STATIC_INLINE XelWriteBuffer * XWBC_Peek(XelWriteBufferChain * ChainPtr)

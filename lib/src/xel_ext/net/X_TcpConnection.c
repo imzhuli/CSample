@@ -47,11 +47,6 @@ static void XTC_EventCallback(XelIoEventBase * IoEventBasePtr, XelIoEventType Io
 	XelTcpConnection * TcpConnectionPtr = X_Entry(IoEventBasePtr, XelTcpConnection, _IoEventBase);
 
 #if defined (X_SYSTEM_LINUX)
-	if (IoEventType == XIET_Err) {
-		XTC_Close(TcpConnectionPtr);
-		TcpConnectionPtr->_EventListener.OnErrorClosed(TcpConnectionPtr, TcpConnectionPtr->_EventListener.ContextPtr);
-		return;
-	}
 	if (IoEventType == XIET_In) {
 		X_DbgInfo("IoEventIn");
 		while(true) {
@@ -104,6 +99,11 @@ static void XTC_EventCallback(XelIoEventBase * IoEventBasePtr, XelIoEventType Io
 			}
 		}
 		XTC_FlushData(TcpConnectionPtr);
+		return;
+	}
+	if (IoEventType == XIET_Err) {
+		XTC_Close(TcpConnectionPtr);
+		TcpConnectionPtr->_EventListener.OnErrorClosed(TcpConnectionPtr, TcpConnectionPtr->_EventListener.ContextPtr);
 		return;
 	}
 #endif
@@ -269,7 +269,9 @@ size_t XTC_PostData(XelTcpConnection * TcpConnectionPtr, const void * DataPtr_, 
 		DataPtr += WB;
 		Size -= WB;
 	}
+
 	if (Size) {
+		XIEB_MarkWriting(&TcpConnectionPtr->_IoEventBase);
 		size_t Total = (size_t)WB + XWBC_PushBack(WriteBufferChainPtr, DataPtr, Size);
 		return Total;
 	}
