@@ -239,10 +239,10 @@ X_STATIC_INLINE void XSW_Raw(XelStreamWriter * CtxPtr, const void * SourcePtr, s
 	memcpy(CtxPtr->Current, SourcePtr, Length);
 	CtxPtr->Current += Length;
 }
-X_STATIC_INLINE void XSW_Skip(XelStreamWriter * CtxPtr, size_t Length) {
+X_STATIC_INLINE void XSW_Skip(XelStreamWriter * CtxPtr, ptrdiff_t Length) {
 	CtxPtr->Current += Length;
 }
-X_STATIC_INLINE size_t XSW_Pos(XelStreamWriter * CtxPtr) {
+X_STATIC_INLINE ptrdiff_t XSW_Offset(XelStreamWriter * CtxPtr) {
 	return (CtxPtr->Current - CtxPtr->Start);
 }
 

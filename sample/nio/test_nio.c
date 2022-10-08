@@ -16,10 +16,17 @@ static const char * HttpRequest =
 "Connection: close\r\n"
 "\r\n";
 
+XelTcpConnectionListener Listener =
+{
+	NULL,
+	NULL,
+	NULL,
+};
+
 int main(int argc, char * argv[])
 {
 	X_RTA(XIC_Init(&IoContext));
-	X_RTA(XTC_InitConnect(&IoContext, &TcpConnection, "14.215.177.38", 80));
+	X_RTA(XTC_InitConnect(&IoContext, &TcpConnection, "14.215.177.38", 80, &Listener));
 
 	XTC_PostData(&TcpConnection, HttpRequest, strlen(HttpRequest));
 
