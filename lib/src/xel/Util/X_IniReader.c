@@ -240,7 +240,7 @@ X_STATIC_INLINE void XIR_Delete(__IniContent__ * vhIni)
 
 XelIniReader XIR_Init(const char * IniFilename)
 {
-    return (XelIniReader)XIR_IniRead(IniFilename);
+    return (XelIniReader)XIR_New(IniFilename);
 }
 
 void XIR_Clean(XelIniReader Reader)
