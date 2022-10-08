@@ -28,6 +28,7 @@ static void XTC_FlushData(XelTcpConnection * TcpConnectionPtr)
 			X_DbgInfo("SendDataError: %s", strerror(errno));
 			if (errno != EAGAIN) {
 				XTC_Close(TcpConnectionPtr);
+				TcpConnectionPtr->_EventListener.OnErrorClosed(TcpConnectionPtr, TcpConnectionPtr->_EventListener.ContextPtr);
 				return;
 			}
 			XIEB_MarkWriting(&TcpConnectionPtr->_IoEventBase);
@@ -39,7 +40,6 @@ static void XTC_FlushData(XelTcpConnection * TcpConnectionPtr)
 			break;
 		}
 	}
-
 }
 
 static void XTC_EventCallback(XelIoEventBase * IoEventBasePtr, XelIoEventType IoEventType)
@@ -47,26 +47,48 @@ static void XTC_EventCallback(XelIoEventBase * IoEventBasePtr, XelIoEventType Io
 	XelTcpConnection * TcpConnectionPtr = X_Entry(IoEventBasePtr, XelTcpConnection, _IoEventBase);
 
 #if defined (X_SYSTEM_LINUX)
+	if (IoEventType == XIET_Err) {
+		XTC_Close(TcpConnectionPtr);
+		TcpConnectionPtr->_EventListener.OnErrorClosed(TcpConnectionPtr, TcpConnectionPtr->_EventListener.ContextPtr);
+		return;
+	}
 	if (IoEventType == XIET_In) {
 		X_DbgInfo("IoEventIn");
 		while(true) {
-			XelUByte Buffer[1024];
-    		ssize_t Rb = recv(TcpConnectionPtr->_Socket, Buffer, (recv_len_t)sizeof(Buffer), 0);
+			XelUByte * BufferPtr = TcpConnectionPtr->_ReadBuffer + TcpConnectionPtr->_ReadDataSize;
+			size_t SpaceSize = sizeof(TcpConnectionPtr->_ReadBuffer) - TcpConnectionPtr->_ReadDataSize;
+			assert(SpaceSize && "No space for reading, this must be a bug, since it's required to consume at least 1 byte when read buffer is full");
+
+			const ssize_t Rb = recv(TcpConnectionPtr->_Socket, BufferPtr, (recv_len_t)SpaceSize, 0);
 			if (Rb > 0) {
-				XelString Hex = XS_HexShow(Buffer, Rb, true);
-				X_DbgInfo("RecvData: size=%zi, Hex=\n%s\n", Rb, XS_GetData(Hex));
-				XS_Delete(Hex);
+				TcpConnectionPtr->_ReadDataSize += Rb;
+				size_t ConsumedSize = TcpConnectionPtr->_EventListener.OnData(
+					TcpConnectionPtr,
+					TcpConnectionPtr->_EventListener.ContextPtr,
+					TcpConnectionPtr->_ReadBuffer, TcpConnectionPtr->_ReadDataSize);
+				if (ConsumedSize) {
+					if (ConsumedSize == TcpConnectionPtr->_ReadDataSize) {
+						TcpConnectionPtr->_ReadDataSize = 0;
+					}
+					else {
+						size_t RemainSize = TcpConnectionPtr->_ReadDataSize - ConsumedSize;
+						memmove(TcpConnectionPtr->_ReadBuffer, TcpConnectionPtr->_ReadBuffer + ConsumedSize, RemainSize);
+						TcpConnectionPtr->_ReadDataSize = RemainSize;
+					}
+				}
 			}
-			if (Rb == 0) {
+			else if (Rb == 0) {
 				X_DbgInfo("PeerClose");
 				XTC_Close(TcpConnectionPtr);
+				TcpConnectionPtr->_EventListener.OnPeerClosed(TcpConnectionPtr, TcpConnectionPtr->_EventListener.ContextPtr);
 				return;
 			}
-			if (Rb < 0) {
+			else { // Rb < 0
 				if (errno == EAGAIN) {
 					return;
 				}
 				XTC_Close(TcpConnectionPtr);
+				TcpConnectionPtr->_EventListener.OnErrorClosed(TcpConnectionPtr, TcpConnectionPtr->_EventListener.ContextPtr);
 				return;
 			}
 		}
@@ -84,17 +106,23 @@ static void XTC_EventCallback(XelIoEventBase * IoEventBasePtr, XelIoEventType Io
 		XTC_FlushData(TcpConnectionPtr);
 		return;
 	}
-	if (IoEventType == XIET_Err) {
-		close(TcpConnectionPtr->_Socket);
-		TcpConnectionPtr->_Socket = XelInvalidSocket;
-		TcpConnectionPtr->_Status = XTCS_Closed;
-		X_DbgError("IoEvent");
-		return;
-	}
 #endif
 }
 
+static size_t DebugPrintOnDataCallback(XelTcpConnection * ConnectinPtr, void * ContextPtr, XelUByte * DataPtr, size_t DataSize)
+{
+	XelString Hex = XS_HexShow(DataPtr, DataSize, true);
+	X_DbgInfo("RecvData: size=%zi, Hex=\n%s\n", DataSize, XS_GetData(Hex));
+	XS_Delete(Hex);
+	return DataSize;
+}
+
 static void TrivialOnConnectedCallback(XelTcpConnection * TcpConnectionPtr, void * ContextPtr)
+{
+	// do nothing
+}
+
+static void TrivialOnPeerClosedCallback(XelTcpConnection * TcpConnectionPtr, void * ContextPtr)
 {
 	// do nothing
 }
@@ -103,10 +131,16 @@ static void XTC_SetEventListener(XelTcpConnection * TcpConnectionPtr, const XelT
 {
 	TcpConnectionPtr->_EventListener = *ListenerPtr;
 	if (!TcpConnectionPtr->_EventListener.OnData) {
-		// TODO
+		TcpConnectionPtr->_EventListener.OnData = &DebugPrintOnDataCallback;
 	}
 	if (!TcpConnectionPtr->_EventListener.OnConnected) {
 		TcpConnectionPtr->_EventListener.OnConnected = &TrivialOnConnectedCallback;
+	}
+	if (!TcpConnectionPtr->_EventListener.OnPeerClosed) {
+		TcpConnectionPtr->_EventListener.OnPeerClosed = &TrivialOnPeerClosedCallback;
+	}
+	if (!TcpConnectionPtr->_EventListener.OnErrorClosed) {
+		TcpConnectionPtr->_EventListener.OnErrorClosed = TcpConnectionPtr->_EventListener.OnPeerClosed;
 	}
 }
 
@@ -145,32 +179,29 @@ bool XTC_InitConnect(XelIoContext * IoContextPtr, XelTcpConnection * TcpConnecti
 		if (-1 == connect(Fd, (struct sockaddr*)&Sockaddr, (socklen_t)sizeof(Sockaddr))) {
 			if (errno != EINPROGRESS) {
 				close(TcpConnectionPtr->_Socket);
-				TcpConnectionPtr->_Socket = XelInvalidSocket;
-				TcpConnectionPtr->_Status = XTCS_Closed;
 				XIEB_Clean(EventBasePtr);
 				XWBC_Clean(&TcpConnectionPtr->_WriteBufferChain);
 				return false;
 			}
-			X_DbgInfo("Connection to %s is inprogress, IoHandle=%i", IpString, Fd);
 			TcpConnectionPtr->_Socket = Fd;
 			TcpConnectionPtr->_Status = XTCS_Connecting;
+			X_DbgInfo("Connection to %s is inprogress, IoHandle=%i", IpString, Fd);
 			XIEB_MarkWriting(EventBasePtr);
-
-			XelIoHandle IoHandle = { .IoType = XIT_Socket, .FileDescriptor = Fd };
-			if (!XIEB_Bind(IoContextPtr, EventBasePtr, IoHandle, XTC_EventCallback)) {
-				X_DbgError("Failed to bind IoEventBase to IoContext");
-				close(TcpConnectionPtr->_Socket);
-				TcpConnectionPtr->_Socket = XelInvalidSocket;
-				TcpConnectionPtr->_Status = XTCS_Closed;
-				XIEB_Clean(EventBasePtr);
-				XWBC_Clean(&TcpConnectionPtr->_WriteBufferChain);
-				return false;
-			}
 		}
 		else {
 			TcpConnectionPtr->_Socket = Fd;
 			TcpConnectionPtr->_Status = XTCS_Connected;
 			X_DbgInfo("Connection to %s is connected", IpString);
+		}
+		XelIoHandle IoHandle = { .IoType = XIT_Socket, .FileDescriptor = Fd };
+		if (!XIEB_Bind(IoContextPtr, EventBasePtr, IoHandle, XTC_EventCallback)) {
+			X_DbgError("Failed to bind IoEventBase to IoContext");
+			close(TcpConnectionPtr->_Socket);
+			TcpConnectionPtr->_Socket = XelInvalidSocket;
+			TcpConnectionPtr->_Status = XTCS_Closed;
+			XIEB_Clean(EventBasePtr);
+			XWBC_Clean(&TcpConnectionPtr->_WriteBufferChain);
+			return false;
 		}
 		XIEB_ResumeReading(EventBasePtr);
 	}
@@ -230,11 +261,8 @@ size_t XTC_PostData(XelTcpConnection * TcpConnectionPtr, const void * DataPtr_, 
 	X_DbgInfo("SendData: %zi", (size_t)WB);
 	if (WB < 0) {
         if (errno != EAGAIN) {
-			XIEB_Unbind(&TcpConnectionPtr->_IoEventBase);
-			close(TcpConnectionPtr->_Socket);
-			TcpConnectionPtr->_Socket = XelInvalidSocket;
-			TcpConnectionPtr->_Status = XTCS_Closed;
-			return 0;
+			XTC_Close(TcpConnectionPtr);
+			return (size_t)(-1);
 		}
 	}
 	else {

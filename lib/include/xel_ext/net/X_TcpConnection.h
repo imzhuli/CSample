@@ -20,8 +20,10 @@ typedef struct XelTcpConnectionListener XelTcpConnectionListener;
 struct XelTcpConnectionListener
 {
 	void * ContextPtr;
-	void (*OnData)(XelTcpConnection * ConnectinPtr, void * ContextPtr, XelUByte * DataPtr, size_t DataSize);
-	void (*OnConnected)(XelTcpConnection * ConnectionPtr, void * ContextPtr);
+	size_t (*OnData)(XelTcpConnection * ConnectinPtr, void * ContextPtr, XelUByte * DataPtr, size_t DataSize);
+	void   (*OnConnected)(XelTcpConnection * ConnectionPtr, void * ContextPtr);
+	void   (*OnPeerClosed)(XelTcpConnection * ConnectionPtr, void * ContextPtr);
+	void   (*OnErrorClosed)(XelTcpConnection * ConnectionPtr, void * ContextPtr);
 };
 
 struct XelTcpConnection
