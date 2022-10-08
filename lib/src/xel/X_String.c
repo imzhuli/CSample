@@ -152,10 +152,15 @@ XelString XS_Concat(XelString Str1, XelString Str2)
     return Ret;
 }
 
+#define HEAD_LINE "+-Line-+  +-----------------Hex-----------------+   +-----Char-----+\n"
+#define EMPTY_HEX "00000000  < Empty Data : Invalid Address/Length >   xxxxxxxxxxxxxxxx"
 XelString XS_HexShow(const void * DataPtr, size_t Length, bool NeedHeader)
 {
-    if (!Length) {
-        return XS_NewString("<empty>");
+    if (!DataPtr || !Length) {
+        if (NeedHeader) {
+            return XS_NewString(HEAD_LINE EMPTY_HEX);
+        }
+        return XS_NewString(EMPTY_HEX);
     }
     const char * hexfmt="%02x";
     const char * buffer = (const char*)DataPtr;
@@ -167,7 +172,7 @@ XelString XS_HexShow(const void * DataPtr, size_t Length, bool NeedHeader)
     char bp [128];
     if (NeedHeader) {
     //	h.append("00000000  0001 0203 0405 0607 0809 0a0b 0c0d 0e0f : ................")
-        XS_AppendString(h, "+-Line-+  +-----------------Hex-----------------+   +-----Char-----+\n");
+        XS_AppendString(h, HEAD_LINE);
     }
     XS_AppendString(h, "00000000  ");
 
