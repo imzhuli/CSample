@@ -57,7 +57,7 @@ void X_JoinThread(XelThreadId ThreadId)
 
 void X_SleepMS(size_t MS)
 {
-    return Sleep((DWORD)MS);
+    Sleep((DWORD)MS);
 }
 
 #elif defined(X_SYSTEM_LINUX) || defined(X_SYSTEM_MACOS) || defined(X_SYSTEM_IOS)
