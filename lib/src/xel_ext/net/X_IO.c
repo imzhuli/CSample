@@ -157,11 +157,13 @@ bool XIEB_Bind(XelIoContext * IoContextPtr, XelIoEventBase * EventBasePtr, XelIo
     if (-1 == epoll_ctl(IoContextPtr->EventPoller, EPOLL_CTL_ADD, IoHandle.FileDescriptor, &Events)) {
         return false;
     }
-#endif
     EventBasePtr->_IoContextPtr = IoContextPtr;
     EventBasePtr->_EventCallback = Callback;
     EventBasePtr->_IoHandle = IoHandle;
     EventBasePtr->_NativeRequiredEvents = InterestedEvents;
+#else
+    X_FatalAbort("not implemented");
+#endif
     return true;
 }
 
