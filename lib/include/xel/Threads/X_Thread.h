@@ -7,6 +7,9 @@ X_CNAME_BEGIN
 
 #if defined(X_SYSTEM_WINDOWS)
 
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
 typedef HANDLE XelThreadId;
 
 #elif defined(X_SYSTEM_LINUX) || defined(X_SYSTEM_MACOS) || defined(X_SYSTEM_IOS)
