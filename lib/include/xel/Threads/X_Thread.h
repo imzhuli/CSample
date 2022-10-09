@@ -23,7 +23,7 @@ typedef pthread_t XelThreadId;
 #error "unsupported platform"
 #endif
 
-X_API bool X_CreateThread(XelThreadId * OuputThreadId, XelThreadRoutine Routine, void * ContextPtr);
+X_API bool X_CreateThread(XelThreadId * OutputThreadId, XelThreadRoutine Routine, void * ContextPtr);
 X_API void X_DetachThread(XelThreadId ThreadId);
 X_API void X_JoinThread(XelThreadId ThreadId);
 X_API void X_SleepMS(size_t MS);

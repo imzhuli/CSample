@@ -32,7 +32,7 @@ static unsigned X_ThreadWrapperProc(void* ContextPtr) // work with _beginthreade
 }
 
 
-bool X_CreateThread(XelThreadId * OuputThreadId, XelThreadRoutine Routine, void * ContextPtr)
+bool X_CreateThread(XelThreadId * OutputThreadId, XelThreadRoutine Routine, void * ContextPtr)
 {
 	if (0 == _beginthreadex(NULL, 0, X_ThreadWrapperProc, XTRW_New(Routine, ContextPtr), 0, OutputThreadId)) {
 		return false;
@@ -56,7 +56,7 @@ void X_JoinThread(XelThreadId ThreadId)
 
 void X_SleepMS(size_t MS)
 {
-    return Sleep(MS);
+    return Sleep((DWORD)MS);
 }
 
 #elif defined(X_SYSTEM_LINUX) || defined(X_SYSTEM_MACOS) || defined(X_SYSTEM_IOS)
@@ -70,9 +70,9 @@ static void * X_ThreadWrapperProc(void* ContextPtr)
     return NULL;
 }
 
-bool X_CreateThread(XelThreadId * OuputThreadId, XelThreadRoutine Routine, void * ContextPtr)
+bool X_CreateThread(XelThreadId * OutputThreadId, XelThreadRoutine Routine, void * ContextPtr)
 {
-	if (0 != pthread_create(OuputThreadId, NULL, X_ThreadWrapperProc, XTRW_New(Routine, ContextPtr))) {
+	if (0 != pthread_create(OutputThreadId, NULL, X_ThreadWrapperProc, XTRW_New(Routine, ContextPtr))) {
 		return false;
 	}
 	return true;
