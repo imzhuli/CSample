@@ -1,5 +1,6 @@
 #include <xel/Threads/X_Thread.h>
 #include <inttypes.h>
+#include <errno.h>
 
 typedef struct XelThreadRoutineWrapper
 {
@@ -115,6 +116,114 @@ bool X_InitMutex(XelMutex * MutexPtr)
 void X_CleanMutex(XelMutex * MutexPtr)
 {
     X_RuntimeAssert(0 == pthread_mutex_destroy(&MutexPtr->_Mutex), "pthread_mutex_destroy should return 0");
+}
+
+bool X_LockMutex(XelMutex * MutexPtr)
+{
+    int Result = pthread_mutex_lock(&MutexPtr->_Mutex);
+    if (Result) {
+        switch (Result) {
+            case EINVAL:
+                X_DbgError(
+                    "pthread_mutex_lock failed (EINVAL), possible reasons are: \n%s",
+                    "\t1. The value specified by mutex does not refer to an initialized mutex object.\n"
+                    "\t2. The mutex was created with the protocol attribute having the value PTHREAD_PRIO_PROTECT and the calling thread's priority is higher than the mutex's current priority ceiling"
+                    );
+                return false;
+            case EAGAIN: 
+                X_DbgError(
+                    "pthread_mutex_lock failed (EAGAIN), possible reasons are: \n%s", 
+                    "\tThe mutex could not be acquired because the maximum number of recursive locks for mutex has been exceeded."
+                    );
+                return false;
+            case ENOTRECOVERABLE:
+                X_DbgError(
+                    "pthread_mutex_lock failed (ENOTRECOVERABLE), possible reasons are: \n%s", 
+                    "\tThe state protected by the mutex is not recoverable."
+                    );
+                return false;
+            case EOWNERDEAD:
+                X_DbgError(
+                    "pthread_mutex_lock failed (EBUSY), possible reasons are: \n%s", 
+                    "\tThe mutex is a robust mutex and the previous owning thread terminated while holding the mutex lock. The mutex lock shall be acquired by the calling thread and it is up to the new owner to make the state consistent."
+                    );
+                return false;
+            case EDEADLK:
+                X_DbgError(
+                    "pthread_mutex_lock failed (EDEADLK), possible reasons are: \n%s", 
+                    "\t1. The mutex type is PTHREAD_MUTEX_ERRORCHECK and the current thread already owns the mutex.\n"
+                    "\t2. A deadlock condition was detected."
+                    );
+                return false;
+            default:
+                X_DbgError("pthread_mutex_lock failed, errno=%i", Result);
+                return false;
+        }
+    }
+    return true;
+}
+
+bool X_TryLockMutex(XelMutex * MutexPtr)
+{
+    int Result = pthread_mutex_trylock(&MutexPtr->_Mutex);
+    if (Result) {
+        switch (Result) {
+            case EINVAL:
+                X_DbgError(
+                    "pthread_mutex_trylock failed (EINVAL), possible reasons are: \n%s",
+                    "\t1. The value specified by mutex does not refer to an initialized mutex object.\n"
+                    "\t2. The mutex was created with the protocol attribute having the value PTHREAD_PRIO_PROTECT and the calling thread's priority is higher than the mutex's current priority ceiling"
+                    );
+                return false;
+            case EAGAIN: 
+                X_DbgError(
+                    "pthread_mutex_trylock failed (EAGAIN), possible reasons are: \n%s", 
+                    "\tThe mutex could not be acquired because the maximum number of recursive locks for mutex has been exceeded."
+                    );
+                return false;
+            case ENOTRECOVERABLE:
+                X_DbgError(
+                    "pthread_mutex_trylock failed (ENOTRECOVERABLE), possible reasons are: \n%s", 
+                    "\tThe state protected by the mutex is not recoverable."
+                    );
+                return false;
+            case EOWNERDEAD:
+                X_DbgError(
+                    "pthread_mutex_trylock failed (EBUSY), possible reasons are: \n%s", 
+                    "\tThe mutex is a robust mutex and the previous owning thread terminated while holding the mutex lock. The mutex lock shall be acquired by the calling thread and it is up to the new owner to make the state consistent."
+                    );
+                return false;
+            case EBUSY:
+                X_DbgError(
+                    "pthread_mutex_trylock failed (EBUSY), possible reasons are: \n%s", 
+                    "\tThe mutex could not be acquired because it was already locked."
+                    );
+                return false;
+            default:
+                X_DbgError("pthread_mutex_trylock failed, errno=%i", Result);
+                return false;
+        }
+    }
+    return true;
+}
+
+bool X_UnlockMutex(XelMutex * MutexPtr)
+{
+    int Result = pthread_mutex_unlock(&MutexPtr->_Mutex);
+    if (Result) {
+        switch (Result) {
+            case EPERM:
+                X_DbgError(
+                    "pthread_mutex_unlock failed, possible reasons are: \n%s",
+                    "\tThe mutex type is PTHREAD_MUTEX_ERRORCHECK or PTHREAD_MUTEX_RECURSIVE, or the mutex is a robust mutex, and the current thread does not own the mutex."
+                    );
+                return false;
+            default:
+                X_DbgError("pthread_mutex_unlock failed, errno=%i", Result);
+                return false;
+        }
+    }
+    return true;
 }
 
 #endif
