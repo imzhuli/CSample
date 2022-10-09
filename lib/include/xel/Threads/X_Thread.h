@@ -9,10 +9,12 @@ X_CNAME_BEGIN
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <process.h>
 
 typedef HANDLE XelThreadId;
 
 #elif defined(X_SYSTEM_LINUX) || defined(X_SYSTEM_MACOS) || defined(X_SYSTEM_IOS)
+
 #include <pthread.h>
 
 typedef pthread_t XelThreadId;
