@@ -26,7 +26,7 @@ void X_DbgError(const char * fmt, ...)
 void X_RuntimeAssert(bool Assertion, const char * Message)
 {
     if (!Assertion) {
-        fprintf(stderr, "X_RuntimeAssert failed: %s", Message);
+        fprintf(stderr, "X_RuntimeAssert failed: %s\n", Message);
         abort();
     }
 }

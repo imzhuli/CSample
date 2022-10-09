@@ -156,9 +156,10 @@ bool X_LockMutex(XelMutex * MutexPtr)
                     );
                 return false;
             default:
-                X_DbgError("pthread_mutex_lock failed, errno=%i", Result);
-                return false;
+                X_Pass();
         }
+        X_DbgError("pthread_mutex_lock failed, errno=%i", Result);
+        return false;
     }
     return true;
 }
@@ -200,9 +201,10 @@ bool X_TryLockMutex(XelMutex * MutexPtr)
                     );
                 return false;
             default:
-                X_DbgError("pthread_mutex_trylock failed, errno=%i", Result);
-                return false;
+                X_Pass();
         }
+        X_DbgError("pthread_mutex_trylock failed, errno=%i", Result);
+        return false;
     }
     return true;
 }
@@ -219,11 +221,45 @@ bool X_UnlockMutex(XelMutex * MutexPtr)
                     );
                 return false;
             default:
-                X_DbgError("pthread_mutex_unlock failed, errno=%i", Result);
-                return false;
+                X_Pass();
         }
+        X_DbgError("pthread_mutex_unlock failed, errno=%i", Result);
+        return false;
     }
     return true;
 }
+
+bool X_InitConditionalVariable(XelConditionalVariable * CondPtr)
+{
+    CondPtr->_StopWaiting = false;
+    return 0 == pthread_cond_init(&CondPtr->_Cond, NULL);
+}
+
+void X_CleanConditionalVariable(XelConditionalVariable * CondPtr)
+{ 
+    pthread_cond_destroy(&CondPtr->_Cond);
+    CondPtr->_StopWaiting = false;
+}
+
+void X_NotifyConditionalVariable(XelConditionalVariable * CondPtr)
+{
+    CondPtr->_StopWaiting = true;
+    X_RuntimeAssert(0 == pthread_cond_signal(&CondPtr->_Cond), "The value cond should refer to an initialized condition variable.");
+}
+
+void X_NotifyAllConditionalVariables(XelConditionalVariable * CondPtr)
+{
+    CondPtr->_StopWaiting = true;
+    X_RuntimeAssert(0 == pthread_cond_broadcast(&CondPtr->_Cond), "The value cond should refer to an initialized condition variable.");
+}
+
+void X_WaitForConditionalVariable(XelConditionalVariable * CondPtr, XelMutex * MutexPtr)
+{
+    CondPtr->_StopWaiting = false;
+    while(!CondPtr->_StopWaiting) {
+        X_RuntimeAssert(0 == pthread_cond_wait(&CondPtr->_Cond, &MutexPtr->_Mutex), "The value cond & mutex should refer to valid object, correctly owned.");
+    }
+}
+
 
 #endif

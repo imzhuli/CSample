@@ -24,6 +24,12 @@ struct XelMutex
     pthread_mutex_t _Mutex;
 };
 
+struct XelConditionalVariable
+{
+    pthread_cond_t _Cond;
+    bool           _StopWaiting;
+};
+
 #else
 #error "unsupported platform"
 #endif
@@ -40,5 +46,12 @@ X_API void X_CleanMutex(XelMutex * MutexPtr);
 X_API bool X_LockMutex(XelMutex * MutexPtr);
 X_API bool X_TryLockMutex(XelMutex * MutexPtr);
 X_API bool X_UnlockMutex(XelMutex * MutexPtr);
+
+typedef struct XelConditionalVariable XelConditionalVariable;
+X_API bool X_InitConditionalVariable(XelConditionalVariable * CondPtr);
+X_API void X_CleanConditionalVariable(XelConditionalVariable * CondPtr);
+X_API void X_NotifyConditionalVariable(XelConditionalVariable * CondPtr);
+X_API void X_NotifyAllConditionalVariables(XelConditionalVariable * CondPtr);
+X_API void X_WaitForConditionalVariable(XelConditionalVariable * CondPtr, XelMutex * MutexPtr);
 
 X_CNAME_END
