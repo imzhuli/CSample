@@ -21,6 +21,7 @@ static void XTRW_Delete(XelThreadRoutineWrapper * WrapperPtr)
 }
 
 #if defined(X_SYSTEM_WINDOWS)
+
 #include <synchapi.h>
 
 static unsigned X_ThreadWrapperProc(void* ContextPtr) // work with _beginthreadex, not _beginthread
@@ -34,7 +35,7 @@ static unsigned X_ThreadWrapperProc(void* ContextPtr) // work with _beginthreade
 
 bool X_CreateThread(XelThreadId * OutputThreadId, XelThreadRoutine Routine, void * ContextPtr)
 {
-	if (0 == _beginthreadex(NULL, 0, X_ThreadWrapperProc, XTRW_New(Routine, ContextPtr), 0, OutputThreadId)) {
+	if (0 == (*OutputThreadId = (XelThreadId)_beginthreadex(NULL, 0, X_ThreadWrapperProc, XTRW_New(Routine, ContextPtr), 0, NULL))) {
 		return false;
 	}
 	return true;
