@@ -48,11 +48,17 @@
 #endif
 
 #if defined(X_SYSTEM_WINDOWS) || defined(X_SYSTEM_LINUX) || defined(X_SYSTEM_MACOS)
+#ifndef X_SYSTEM_ANDROID
 	#define X_SYSTEM_DESKTOP
+#endif
 #endif
 
 #if defined(X_SYSTEM_IPHONE_SIMULATOR) || defined(X_SYSTEM_IPHONE)
 	#define X_SYSTEM_IOS
+#endif
+
+#if defined(X_SYSTEM_IOS) || defined(X_SYSTEM_MACOS)
+	#define X_SYSTEM_DARWIN
 #endif
 
 #if defined(_MSC_VER)

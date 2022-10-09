@@ -1,5 +1,7 @@
 project(lib_${libname} C)
 
+find_package(Threads REQUIRED)
+
 # enable specific macors by system type:
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
 	set(PLATFORM_LIBRARIES wsock32 ws2_32)
@@ -23,12 +25,14 @@ link_directories(
 set(shared_lib_dependency_private
 	)
 set(shared_lib_dependency_public
+	Threads::Threads
 	${PLATFORM_LIBRARIES}
 	)
 
 # source files:
 aux_source_directory(./src/xel                          X_SRC)
 aux_source_directory(./src/xel/Util                     X_SRC)
+aux_source_directory(./src/xel/Threads                  X_SRC)
 aux_source_directory(./src/xel_ext/net                  X_SRC)
 
 # 3rd party
