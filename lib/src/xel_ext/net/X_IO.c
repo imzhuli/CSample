@@ -6,6 +6,7 @@
 #if defined(X_SYSTEM_LINUX) ||defined(X_SYSTEM_MACOS) || defined(X_SYSTEM_IOS)
 #include <fcntl.h>
 #define LOOP_ONCE_MAX_EVENT_NUMBER  256
+#endif
 
 bool XIC_Init(XelIoContext * ContextPtr)
 {
