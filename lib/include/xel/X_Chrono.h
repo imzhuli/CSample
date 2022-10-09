@@ -3,9 +3,9 @@
 
 X_CNAME_BEGIN
 
-extern uint64_t X_GetTimestamp();
-extern uint64_t X_GetTimestampMS();
-extern uint64_t X_GetTimestampUS();
+X_API uint64_t X_GetTimestamp();
+X_API uint64_t X_GetTimestampMS();
+X_API uint64_t X_GetTimestampUS();
 
 typedef struct XelTimer XelTimer;
 struct XelTimer
