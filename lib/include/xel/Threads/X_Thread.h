@@ -19,13 +19,22 @@ typedef HANDLE XelThreadId;
 
 typedef pthread_t XelThreadId;
 
+struct XelMutex
+{
+    pthread_mutex_t _Mutex;
+};
+
 #else
 #error "unsupported platform"
 #endif
 
-X_API bool X_CreateThread(XelThreadId * OutputThreadId, XelThreadRoutine Routine, void * ContextPtr);
+X_API bool X_StartThread(XelThreadId * OutputThreadId, XelThreadRoutine Routine, void * ContextPtr);
 X_API void X_DetachThread(XelThreadId ThreadId);
 X_API void X_JoinThread(XelThreadId ThreadId);
 X_API void X_SleepMS(size_t MS);
+
+typedef struct XelMutex XelMutex;
+X_API bool X_InitMutex(XelMutex * MutexPtr);
+X_API void X_CleanMutex(XelMutex * MutexPtr);
 
 X_CNAME_END

@@ -33,7 +33,7 @@ static unsigned X_ThreadWrapperProc(void* ContextPtr) // work with _beginthreade
 }
 
 
-bool X_CreateThread(XelThreadId * OutputThreadId, XelThreadRoutine Routine, void * ContextPtr)
+bool X_StartThread(XelThreadId * OutputThreadId, XelThreadRoutine Routine, void * ContextPtr)
 {
 	if (0 == (*OutputThreadId = (XelThreadId)_beginthreadex(NULL, 0, X_ThreadWrapperProc, XTRW_New(Routine, ContextPtr), 0, NULL))) {
 		return false;
@@ -71,7 +71,7 @@ static void * X_ThreadWrapperProc(void* ContextPtr)
     return NULL;
 }
 
-bool X_CreateThread(XelThreadId * OutputThreadId, XelThreadRoutine Routine, void * ContextPtr)
+bool X_StartThread(XelThreadId * OutputThreadId, XelThreadRoutine Routine, void * ContextPtr)
 {
 	if (0 != pthread_create(OutputThreadId, NULL, X_ThreadWrapperProc, XTRW_New(Routine, ContextPtr))) {
 		return false;
@@ -105,6 +105,16 @@ void X_SleepMS(size_t MS)
     while(-1 == nanosleep(&Timeout, &Timeout)) {
         X_Pass();
     }
+}
+
+bool X_InitMutex(XelMutex * MutexPtr)
+{
+    return 0 == pthread_mutex_init(&MutexPtr->_Mutex, NULL);
+}
+
+void X_CleanMutex(XelMutex * MutexPtr)
+{
+    X_RuntimeAssert(0 == pthread_mutex_destroy(&MutexPtr->_Mutex), "pthread_mutex_destroy should return 0");
 }
 
 #endif

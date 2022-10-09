@@ -4,16 +4,15 @@
 void SubThread(void * ContextPtr)
 {
     printf("SubThreadContextPtr=%p, routine=%p\n", ContextPtr, (void*)SubThread);
-    X_SleepMS(3000);
+    X_SleepMS(100);
     printf("SubThread exits\n");
 }
 
 int main(int argc, char * argv[])
 {
     XelThreadId ThreadId;
-    if (!X_CreateThread(&ThreadId, SubThread, SubThread)) {
+    if (!X_StartThread(&ThreadId, SubThread, SubThread)) {
         fprintf(stderr, "failed to create sub thread\n");
-        X_SleepMS(1000);
         exit(-1);
     }
 
