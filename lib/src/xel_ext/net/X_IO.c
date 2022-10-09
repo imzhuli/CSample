@@ -5,8 +5,6 @@
 
 #if defined(X_SYSTEM_LINUX) ||defined(X_SYSTEM_MACOS) || defined(X_SYSTEM_IOS)
 #include <fcntl.h>
-#endif
-
 #define LOOP_ONCE_MAX_EVENT_NUMBER  256
 
 bool XIC_Init(XelIoContext * ContextPtr)
@@ -47,6 +45,7 @@ void XIC_Clean(XelIoContext * ContextPtr)
 
 static void XIC_UpdateEvents(XelIoContext * ContextPtr, XelIoEventBase * EventBasePtr)
 {
+#if defined(X_SYSTEM_LINUX)
     uint32_t InterestedEvents = EPOLLET;
     if (EventBasePtr->_EnableReadingEvent) {
         InterestedEvents |= EPOLLIN;
@@ -61,6 +60,7 @@ static void XIC_UpdateEvents(XelIoContext * ContextPtr, XelIoEventBase * EventBa
         }
         EventBasePtr->_NativeRequiredEvents = InterestedEvents;
     }
+#endif
 }
 
 void XIC_LoopOnce(XelIoContext * ContextPtr, int TimeoutMS)
