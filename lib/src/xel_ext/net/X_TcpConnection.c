@@ -232,7 +232,7 @@ void XTC_Close(XelTcpConnection * TcpConnectionPtr)
 		return;
 	}
 	XIEB_Unbind(&TcpConnectionPtr->_IoEventBase);
-	close(TcpConnectionPtr->_Socket);
+	XelCloseSocket(TcpConnectionPtr->_Socket);
 	TcpConnectionPtr->_Socket = XelInvalidSocket;
 	TcpConnectionPtr->_Status = XTCS_Closed;
 	TcpConnectionPtr->_ReadDataSize = 0;
