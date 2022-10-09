@@ -238,6 +238,12 @@ X_API X_PRINTF_LIKE(1,2) void X_DbgError(const char * fmt, ...);
 #define X_DbgError(fmt, ...)
 #endif
 
+typedef struct XelDataView XelDataView;
+struct XelDataView {
+    const void * DataPtr;
+    size_t       Size;
+};
+
 typedef struct XelBufferView XelBufferView;
 struct XelBufferView
 {
