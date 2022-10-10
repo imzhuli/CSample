@@ -13,7 +13,6 @@ set(shared_lib_dependency_private
 	${LUA_LIBRARIES}
 )
 
-
 function(add_sub_test sub_dir_name)
 	aux_source_directory(${sub_dir_name} LOCAL_SOURCE_CODE)
 	add_executable(test_${sub_dir_name}  ${LOCAL_SOURCE_CODE})

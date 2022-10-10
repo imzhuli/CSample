@@ -14,12 +14,18 @@ do
         break;
     fi
 
-    if getopts c:s: opt; then
+    if getopts c:x:s: opt; then
         case "$opt" in
             c)
                 echo ccompiler="$OPTARG"
                 ccompiler="$OPTARG"
                 shift $(($OPTIND - 1))
+                ;;
+            x)
+                echo cxxcompiler="$OPTARG"
+                cxxcompiler="$OPTARG"
+                shift $(($OPTIND - 1))
+                echo "cxxcompiler detected: " "$cxxcompiler"
                 ;;
             s)
                 echo sysroot="$OPTARG"
@@ -50,6 +56,9 @@ done
 if [ ! "$ccompiler" = "" ]; then
     CMAKE_FLAGS+=("-DCMAKE_C_COMPILER=$ccompiler")
 fi
+if [ ! "$cxxcompiler" = "" ]; then
+    CMAKE_FLAGS+=("-DCMAKE_CXX_COMPILER=$cxxcompiler")
+fi
 if [ ! "$sysroot" = "" ]; then
     if [ ! -d "$sysroot" ]; then
         echo Failed to check sysroot directory
@@ -63,7 +72,7 @@ rm -rf ./build
 mkdir build
 
 cd build
-cmake "$CMAKE_FLAGS" -Wno-dev ../
+cmake "${CMAKE_FLAGS[@]}" -Wno-dev ../
 make -j ${cpu_num}
 make test
 cd ..
