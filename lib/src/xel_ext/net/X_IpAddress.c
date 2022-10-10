@@ -14,13 +14,13 @@ typedef union XelIpv4Punning XelIpv4Punning;
 // struct sockaddr_in  Addr4;
 // struct sockaddr_in6 Addr6;
 
-bool X_Ipv4ToStr(XelIpStr * OutputPtr, XelInAddr * SinAddrPtr)
+bool X_Ipv4ToStr(XelIpStr * OutputPtr, const XelInAddr * SinAddrPtr)
 {
     OutputPtr->CharSequence[0] = '\0';
     return inet_ntop(AF_INET, SinAddrPtr, OutputPtr->CharSequence, sizeof(OutputPtr->CharSequence));
 }
 
-bool X_Ipv6ToStr(XelIpStr * OutputPtr, XelIn6Addr * Sin6AddrPtr)
+bool X_Ipv6ToStr(XelIpStr * OutputPtr, const XelIn6Addr * Sin6AddrPtr)
 {
     OutputPtr->CharSequence[0] = '\0';
     return inet_ntop(AF_INET6, Sin6AddrPtr, OutputPtr->CharSequence, sizeof(OutputPtr->CharSequence));

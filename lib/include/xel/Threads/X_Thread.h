@@ -71,8 +71,7 @@ X_API void X_WaitForConditionalVariable(XelConditionalVariable * CondPtr, XelMut
 
 #ifndef XEL_LACK_ATOMIC
 #include <stdatomic.h>
-#else 
-#error XEL_NO_ATOMIC
+#else
 #endif
 
 struct XelSpinlock

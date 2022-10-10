@@ -165,7 +165,7 @@ X_STATIC_INLINE void XL_GrabListTail(XelList * ListPtr, XelList * From)
 	XelListNode * LocalTail = ListPtr->Head.PrevNodePtr;
 	ListPtr->Head.PrevNodePtr = RemoteTail;
 	RemoteTail->NextNodePtr = &ListPtr->Head;
-	LocalTail->PrevNodePtr = RemoteHead;
+	LocalTail->NextNodePtr = RemoteHead;
 	RemoteHead->PrevNodePtr = LocalTail;
 }
 
