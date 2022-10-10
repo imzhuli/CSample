@@ -53,9 +53,9 @@ typedef struct XelMutex XelMutex;
 X_API bool X_InitMutex(XelMutex * MutexPtr);
 X_API void X_CleanMutex(XelMutex * MutexPtr);
 
-X_API bool X_LockMutex(XelMutex * MutexPtr);
+X_API void X_LockMutex(XelMutex * MutexPtr);
 X_API bool X_TryLockMutex(XelMutex * MutexPtr);
-X_API bool X_UnlockMutex(XelMutex * MutexPtr);
+X_API void X_UnlockMutex(XelMutex * MutexPtr);
 
 typedef struct XelConditionalVariable XelConditionalVariable;
 X_API bool X_InitConditionalVariable(XelConditionalVariable * CondPtr);
