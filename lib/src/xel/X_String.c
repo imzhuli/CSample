@@ -153,7 +153,7 @@ XelString XS_Concat(XelString Str1, XelString Str2)
 }
 
 #define HEAD_LINE "+-Line-+  +-----------------Hex-----------------+   +-----Char-----+\n"
-#define EMPTY_HEX "00000000  < Empty Data : Invalid Address/Length >   xxxxxxxxxxxxxxxx"
+#define EMPTY_HEX "00000000  <              EmptyData              >   xxxxxxxxxxxxxxxx"
 XelString XS_HexShow(const void * DataPtr, size_t Length, bool NeedHeader)
 {
     if (!DataPtr || !Length) {

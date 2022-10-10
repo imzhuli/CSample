@@ -326,7 +326,7 @@ void X_AcquireSpinlock(XelSpinlock * LockPtr)
 #if defined(XEL_LACK_ATOMIC)
     X_LockMutex(&LockPtr->_Mutex);
 #else
-    while(!atomic_flag_test_and_set(&LockPtr->_Flag)) {
+    while(atomic_flag_test_and_set(&LockPtr->_Flag)) {
         X_Pass();
     }
 #endif
@@ -340,7 +340,6 @@ X_API void X_ReleaseSpinlock(XelSpinlock * LockPtr)
     atomic_flag_clear(&LockPtr->_Flag);
 #endif
 }
-
 
 // AutoResetEvent
 
