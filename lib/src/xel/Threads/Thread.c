@@ -300,6 +300,48 @@ void X_WaitForConditionalVariable(XelConditionalVariable * CondPtr, XelMutex * M
 
 #endif
 
+// spinlock :
+
+void X_InitSpinlock(XelSpinlock * LockPtr)
+{
+#if defined(XEL_LACK_ATOMIC)
+    X_InitMutex(&LockPtr->_Mutex);
+#else
+    atomic_flag InitValue = ATOMIC_FLAG_INIT;
+    LockPtr->_Flag = InitValue;
+#endif
+}
+
+void X_CleanSpinlock(XelSpinlock * LockPtr)
+{
+#if defined(XEL_LACK_ATOMIC)
+    X_CleanMutex(&LockPtr->_Mutex);
+#else
+    X_Pass();
+#endif
+}
+
+void X_AcquireSpinlock(XelSpinlock * LockPtr)
+{
+#if defined(XEL_LACK_ATOMIC)
+    X_LockMutex(&LockPtr->_Mutex);
+#else
+    while(!atomic_flag_test_and_set(&LockPtr->_Flag)) {
+        X_Pass();
+    }
+#endif
+}
+
+X_API void X_ReleaseSpinlock(XelSpinlock * LockPtr)
+{
+#if defined(XEL_LACK_ATOMIC)
+    X_UnlockMutex(&LockPtr->_Mutex);
+#else
+    atomic_flag_clear(&LockPtr->_Flag);
+#endif
+}
+
+
 // AutoResetEvent
 
 bool X_InitAutoResetEvent(XelAutoResetEvent * EventPtr)
@@ -322,19 +364,32 @@ void X_CleanAutoResetEvent(XelAutoResetEvent * EventPtr)
     EventPtr->_HasEvent = false;
 }
 
-void X_WaitForAutoResetEvent(XelAutoResetEvent * EventPtr)
+void X_WaitForAutoResetEventAndLock(XelAutoResetEvent * EventPtr)
 {
     X_LockMutex(&EventPtr->_Mutex);
     while (!EventPtr->_HasEvent) {
         X_WaitForConditionalVariable(&EventPtr->_CondVar, &EventPtr->_Mutex);
     }
+}
+
+void X_UnlockAutoResetEvent(XelAutoResetEvent * EventPtr)
+{
     EventPtr->_HasEvent = false;
     X_UnlockMutex(&EventPtr->_Mutex);
 }
 
-X_API void X_NotifyAutoResetEvent(XelAutoResetEvent * EventPtr)
+void X_PrepareAutoResetEvent(XelAutoResetEvent * EventPtr)
 {
     X_LockMutex(&EventPtr->_Mutex);
+}
+
+void X_CancelAutoResetEvent(XelAutoResetEvent * EventPtr)
+{
+    X_LockMutex(&EventPtr->_Mutex);
+}
+
+void X_FireAutoResetEvent(XelAutoResetEvent * EventPtr)
+{
     if(EventPtr->_HasEvent) {
         X_UnlockMutex(&EventPtr->_Mutex);
         return;

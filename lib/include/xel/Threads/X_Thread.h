@@ -63,6 +63,32 @@ X_API void X_NotifyConditionalVariable(XelConditionalVariable * CondPtr);
 X_API void X_NotifyAllConditionalVariables(XelConditionalVariable * CondPtr);
 X_API void X_WaitForConditionalVariable(XelConditionalVariable * CondPtr, XelMutex * MutexPtr);
 
+#if defined(__GNUC__)
+    #if (__GNUC__ < 7)
+        #define XEL_LACK_ATOMIC 1
+    #endif
+#endif
+
+#ifndef XEL_LACK_ATOMIC
+#include <stdatomic.h>
+#else 
+#error XEL_NO_ATOMIC
+#endif
+
+struct XelSpinlock
+{
+#ifndef XEL_LACK_ATOMIC
+    atomic_flag _Flag;
+#else
+    XelMutex    _Mutex;
+#endif
+};
+typedef struct XelSpinlock XelSpinlock;
+X_API void X_InitSpinlock(XelSpinlock * LockPtr);
+X_API void X_CleanSpinlock(XelSpinlock * LockPtr);
+X_API void X_AcquireSpinlock(XelSpinlock * LockPtr);
+X_API void X_ReleaseSpinlock(XelSpinlock * LockPtr);
+
 struct XelAutoResetEvent
 {
     struct XelMutex                 _Mutex;
@@ -72,7 +98,10 @@ struct XelAutoResetEvent
 typedef struct XelAutoResetEvent XelAutoResetEvent;
 X_API bool X_InitAutoResetEvent(XelAutoResetEvent * EventPtr);
 X_API void X_CleanAutoResetEvent(XelAutoResetEvent * EventPtr);
-X_API void X_WaitForAutoResetEvent(XelAutoResetEvent * EventPtr);
-X_API void X_NotifyAutoResetEvent(XelAutoResetEvent * EventPtr);
+X_API void X_WaitForAutoResetEventAndLock(XelAutoResetEvent * EventPtr);
+X_API void X_UnlockAutoResetEvent(XelAutoResetEvent * EventPtr);
+X_API void X_PrepareAutoResetEvent(XelAutoResetEvent * EventPtr);
+X_API void X_CancelAutoResetEvent(XelAutoResetEvent * EventPtr);
+X_API void X_FireAutoResetEvent(XelAutoResetEvent * EventPtr);
 
 X_CNAME_END

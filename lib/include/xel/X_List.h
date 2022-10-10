@@ -93,6 +93,11 @@ X_STATIC_INLINE bool XL_IsEmpty(XelList * ListPtr)
 	return !XLN_IsLinked(&ListPtr->Head);
 }
 
+X_STATIC_INLINE void XL_Clean(XelList * ListPtr) 
+{
+	assert(XL_IsEmpty(ListPtr));
+}
+
 X_STATIC_INLINE XelListForwardIterator XL_Begin(XelList * ListPtr)
 {
 	XelListForwardIterator InitObject = { ListPtr->Head.NextNodePtr, ListPtr->Head.NextNodePtr->NextNodePtr };
@@ -125,6 +130,43 @@ X_STATIC_INLINE void XL_GrabTail(XelList * ListPtr, XelListNode * NodePtr)
 {
 	XLN_DetachUnsafe(NodePtr);
 	XLN_AppendUnsafe(NodePtr, ListPtr->Head.PrevNodePtr);
+}
+
+X_STATIC_INLINE XelListNode * XL_PopHead(XelList * ListPtr)
+{
+	if (XL_IsEmpty(ListPtr)) {
+		return NULL;
+	}
+	XelListNode * Ret = ListPtr->Head.NextNodePtr;
+	XLN_Detach(Ret);
+	return Ret;
+}
+
+X_STATIC_INLINE XelListNode * XL_PopTail(XelList * ListPtr)
+{
+	if (XL_IsEmpty(ListPtr)) {
+		return NULL;
+	}
+	XelListNode * Ret = ListPtr->Head.PrevNodePtr;
+	XLN_Detach(Ret);
+	return Ret;
+}
+
+X_STATIC_INLINE void XL_GrabListTail(XelList * ListPtr, XelList * From)
+{
+	if (XL_IsEmpty(From)) {
+		return;
+	}
+	
+	XelListNode * RemoteHead = From->Head.NextNodePtr;
+	XelListNode * RemoteTail = From->Head.PrevNodePtr;
+	XLN_Init(&From->Head);
+
+	XelListNode * LocalTail = ListPtr->Head.PrevNodePtr;
+	ListPtr->Head.PrevNodePtr = RemoteTail;
+	RemoteTail->NextNodePtr = &ListPtr->Head;
+	LocalTail->PrevNodePtr = RemoteHead;
+	RemoteHead->PrevNodePtr = LocalTail;
 }
 
 // forward iterator

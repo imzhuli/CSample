@@ -1,5 +1,9 @@
 #include <xel_ext/net/X_IpAddress.h>
 
+
+XelInAddr  XelInAddrZero  = XEL_IN_ADDR_INIT;
+XelIn6Addr XelIn6AddrZero = XEL_IN6_ADDR_INIT;
+
 union XelIpv4Punning
 {
 	uint32_t S_Addr;

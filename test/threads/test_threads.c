@@ -18,7 +18,8 @@ void SubThread(void * ContextPtr)
     } while(false);
 
     X_SleepMS(100);
-    X_NotifyAutoResetEvent(&Event);
+    X_PrepareAutoResetEvent(&Event);
+    X_FireAutoResetEvent(&Event);
     printf("SubThread exits\n");
 }
 
@@ -42,8 +43,9 @@ int main(int argc, char * argv[])
     } while(false);
 
     do {
-        X_WaitForAutoResetEvent(&Event);
+        X_WaitForAutoResetEventAndLock(&Event);
         printf("AutoResetEvent Triggered\n");
+        X_UnlockAutoResetEvent(&Event);
     } while(false);
 
     X_JoinThread(ThreadId);

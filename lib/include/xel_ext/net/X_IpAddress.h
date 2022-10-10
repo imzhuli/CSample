@@ -17,9 +17,11 @@ typedef struct XelIpStr {
 
 typedef struct in_addr  XelInAddr;
 #define XEL_IN_ADDR_INIT {0}
+X_API XelInAddr XelInAddrZero;
 
 typedef struct in6_addr XelIn6Addr;
 #define XEL_IN6_ADDR_INIT {{{0}}}
+X_API XelIn6Addr XelIn6AddrZero;
 
 X_API bool X_Ipv4ToStr(XelIpStr * OutputPtr, XelInAddr  * SinAddrPtr);
 X_API bool X_Ipv6ToStr(XelIpStr * OutputPtr, XelIn6Addr * Sin6AddrPtr);
