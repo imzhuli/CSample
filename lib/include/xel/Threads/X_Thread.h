@@ -21,6 +21,7 @@ struct XelMutex
 struct XelConditionalVariable
 {
     CONDITION_VARIABLE _CondVar;
+    bool               _StopWaiting;
 };
 
 #elif defined(X_SYSTEM_LINUX) || defined(X_SYSTEM_MACOS) || defined(X_SYSTEM_IOS)
@@ -36,8 +37,7 @@ struct XelMutex
 
 struct XelConditionalVariable
 {
-    pthread_cond_t _Cond;
-    bool           _StopWaiting;
+    pthread_cond_t _CondVar;
 };
 
 #else
@@ -52,7 +52,6 @@ X_API void X_SleepMS(size_t MS);
 typedef struct XelMutex XelMutex;
 X_API bool X_InitMutex(XelMutex * MutexPtr);
 X_API void X_CleanMutex(XelMutex * MutexPtr);
-
 X_API void X_LockMutex(XelMutex * MutexPtr);
 X_API bool X_TryLockMutex(XelMutex * MutexPtr);
 X_API void X_UnlockMutex(XelMutex * MutexPtr);
@@ -68,7 +67,7 @@ struct XelAutoResetEvent
 {
     struct XelMutex                 _Mutex;
     struct XelConditionalVariable   _CondVar;
-    bool                            _HasEvent;
+    volatile bool                   _HasEvent;
 };
 typedef struct XelAutoResetEvent XelAutoResetEvent;
 X_API bool X_InitAutoResetEvent(XelAutoResetEvent * EventPtr);

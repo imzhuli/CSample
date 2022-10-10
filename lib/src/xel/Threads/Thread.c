@@ -63,7 +63,8 @@ void X_SleepMS(size_t MS)
 
 bool X_InitMutex(XelMutex * MutexPtr)
 {
-    InitializeCriticalSection(&MutexPtr->_CriticalSecion);
+    InitializeCriticalSection(&MutexPtr->_CriticalSection);
+    return true;
 }
 
 void X_CleanMutex(XelMutex * MutexPtr)
@@ -81,11 +82,36 @@ bool X_TryLockMutex(XelMutex * MutexPtr)
     return TryEnterCriticalSection(&MutexPtr->_CriticalSection);
 }   
 
-bool X_UnlockMutex(XelMutex * MutexPtr)
+void X_UnlockMutex(XelMutex * MutexPtr)
 {
     LeaveCriticalSection(&MutexPtr->_CriticalSection);
 }
 
+bool X_InitConditionalVariable(XelConditionalVariable * CondPtr)
+{
+    InitializeConditionVariable(&CondPtr->_CondVar);
+    return true;
+}
+
+void X_CleanConditionalVariable(XelConditionalVariable * CondPtr)
+{
+    // no explicit cleanup for CONDITION_VARIABLE type;
+}
+
+void X_NotifyConditionalVariable(XelConditionalVariable * CondPtr)
+{
+    WakeConditionVariable(&CondPtr->_CondVar);
+}
+
+void X_NotifyAllConditionalVariables(XelConditionalVariable * CondPtr)
+{
+    WakeAllConditionVariable(&CondPtr->_CondVar);
+}
+
+void X_WaitForConditionalVariable(XelConditionalVariable * CondPtr, XelMutex * MutexPtr)
+{
+    SleepConditionVariableCS(&CondPtr->_CondVar, &MutexPtr->_CriticalSection, INFINITE);
+}
 
 #elif defined(X_SYSTEM_LINUX) || defined(X_SYSTEM_MACOS) || defined(X_SYSTEM_IOS)
 #include <time.h>
@@ -249,34 +275,27 @@ void X_UnlockMutex(XelMutex * MutexPtr)
 
 bool X_InitConditionalVariable(XelConditionalVariable * CondPtr)
 {
-    CondPtr->_StopWaiting = false;
-    return 0 == pthread_cond_init(&CondPtr->_Cond, NULL);
+    return 0 == pthread_cond_init(&CondPtr->_CondVar, NULL);
 }
 
 void X_CleanConditionalVariable(XelConditionalVariable * CondPtr)
 { 
-    pthread_cond_destroy(&CondPtr->_Cond);
-    CondPtr->_StopWaiting = false;
+    pthread_cond_destroy(&CondPtr->_CondVar);
 }
 
 void X_NotifyConditionalVariable(XelConditionalVariable * CondPtr)
 {
-    CondPtr->_StopWaiting = true;
-    X_RuntimeAssert(0 == pthread_cond_signal(&CondPtr->_Cond), "The value cond should refer to an initialized condition variable.");
+    X_RuntimeAssert(0 == pthread_cond_signal(&CondPtr->_CondVar), "The value cond should refer to an initialized condition variable.");
 }
 
 void X_NotifyAllConditionalVariables(XelConditionalVariable * CondPtr)
 {
-    CondPtr->_StopWaiting = true;
-    X_RuntimeAssert(0 == pthread_cond_broadcast(&CondPtr->_Cond), "The value cond should refer to an initialized condition variable.");
+    X_RuntimeAssert(0 == pthread_cond_broadcast(&CondPtr->_CondVar), "The value cond should refer to an initialized condition variable.");
 }
 
 void X_WaitForConditionalVariable(XelConditionalVariable * CondPtr, XelMutex * MutexPtr)
 {
-    CondPtr->_StopWaiting = false;
-    while(!CondPtr->_StopWaiting) {
-        X_RuntimeAssert(0 == pthread_cond_wait(&CondPtr->_Cond, &MutexPtr->_Mutex), "The value cond & mutex should refer to valid object, correctly owned.");
-    }
+    X_RuntimeAssert(0 == pthread_cond_wait(&CondPtr->_CondVar, &MutexPtr->_Mutex), "The value cond & mutex should refer to valid object, correctly owned.");
 }
 
 #endif
@@ -294,7 +313,6 @@ bool X_InitAutoResetEvent(XelAutoResetEvent * EventPtr)
     }
     EventPtr->_HasEvent = false;
     return true;
-
 }
 
 void X_CleanAutoResetEvent(XelAutoResetEvent * EventPtr)
@@ -307,12 +325,9 @@ void X_CleanAutoResetEvent(XelAutoResetEvent * EventPtr)
 void X_WaitForAutoResetEvent(XelAutoResetEvent * EventPtr)
 {
     X_LockMutex(&EventPtr->_Mutex);
-    if (EventPtr->_HasEvent) {
-        EventPtr->_HasEvent = false;
-        X_UnlockMutex(&EventPtr->_Mutex);
-        return;
+    while (!EventPtr->_HasEvent) {
+        X_WaitForConditionalVariable(&EventPtr->_CondVar, &EventPtr->_Mutex);
     }
-    X_WaitForConditionalVariable(&EventPtr->_CondVar, &EventPtr->_Mutex);
     EventPtr->_HasEvent = false;
     X_UnlockMutex(&EventPtr->_Mutex);
 }
@@ -325,7 +340,7 @@ X_API void X_NotifyAutoResetEvent(XelAutoResetEvent * EventPtr)
         return;
     }
     EventPtr->_HasEvent = true;
-    X_NotifyConditionalVariable(&EventPtr->_CondVar);
     X_UnlockMutex(&EventPtr->_Mutex);
+    X_NotifyConditionalVariable(&EventPtr->_CondVar);
 }
 
