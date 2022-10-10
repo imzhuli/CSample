@@ -103,6 +103,7 @@ X_STATIC_INLINE XelIoHandle XIH_None() { XelIoHandle NoneObject = { XIT_Unknown 
 struct XelIoContext {
     XelEventPoller    EventPoller;
     XelIoEventBase *  ProcessingTargerPtr;
+    XelList           UserEventList;
     unsigned char     Reserved [16];
 };
 

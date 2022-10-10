@@ -27,6 +27,7 @@ bool XIC_Init(XelIoContext * ContextPtr)
         InitValue.EventPoller = Epoll;
     #endif
     *ContextPtr = InitValue;
+    XL_Init(&ContextPtr->UserEventList);
     return true;
 }
 
@@ -35,12 +36,13 @@ void XIC_Clean(XelIoContext * ContextPtr)
     if (ContextPtr->EventPoller == XelInvalidEventPoller) {
         return;
     }
+
+    XL_Clean(&ContextPtr->UserEventList);
     #if defined(X_SYSTEM_LINUX)
         close(ContextPtr->EventPoller);
     #elif defined(X_SYSTEM_MACOS) || defined(X_SYSTEM_IOS)
         close(ContextPtr->EventPoller);
     #endif
-
     ContextPtr->EventPoller = XelInvalidEventPoller;
 }
 
