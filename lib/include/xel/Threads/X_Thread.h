@@ -30,6 +30,14 @@ struct XelConditionalVariable
     bool           _StopWaiting;
 };
 
+struct XelAutoResetEvent
+{
+    struct XelMutex                 _Mutex;
+    struct XelConditionalVariable   _CondVar;
+    bool                            _HasEvent;
+};
+
+
 #else
 #error "unsupported platform"
 #endif
@@ -53,5 +61,11 @@ X_API void X_CleanConditionalVariable(XelConditionalVariable * CondPtr);
 X_API void X_NotifyConditionalVariable(XelConditionalVariable * CondPtr);
 X_API void X_NotifyAllConditionalVariables(XelConditionalVariable * CondPtr);
 X_API void X_WaitForConditionalVariable(XelConditionalVariable * CondPtr, XelMutex * MutexPtr);
+
+typedef struct XelAutoResetEvent XelAutoResetEvent;
+X_API bool X_InitAutoResetEvent(XelAutoResetEvent * EventPtr);
+X_API void X_CleanAutoResetEvent(XelAutoResetEvent * EventPtr);
+X_API void X_WaitForAutoResetEvent(XelAutoResetEvent * EventPtr);
+X_API void X_NotifyAutoResetEvent(XelAutoResetEvent * EventPtr);
 
 X_CNAME_END

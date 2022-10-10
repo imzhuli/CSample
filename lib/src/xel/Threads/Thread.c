@@ -261,5 +261,52 @@ void X_WaitForConditionalVariable(XelConditionalVariable * CondPtr, XelMutex * M
     }
 }
 
+// AutoResetEvent
+
+bool X_InitAutoResetEvent(XelAutoResetEvent * EventPtr)
+{
+    if (!X_InitMutex(&EventPtr->_Mutex)) {
+        return false;
+    }
+    if (!X_InitConditionalVariable(&EventPtr->_CondVar)) {
+        X_CleanMutex(&EventPtr->_Mutex);
+        return false;
+    }
+    EventPtr->_HasEvent = false;
+    return true;
+
+}
+
+void X_CleanAutoResetEvent(XelAutoResetEvent * EventPtr)
+{
+    X_CleanConditionalVariable(&EventPtr->_CondVar);
+    X_CleanMutex(&EventPtr->_Mutex);
+    EventPtr->_HasEvent = false;
+}
+
+void X_WaitForAutoResetEvent(XelAutoResetEvent * EventPtr)
+{
+    X_RuntimeAssert(X_LockMutex(&EventPtr->_Mutex), "X_WaitForAutoResetEvent should always lock internal mutex");
+    if (EventPtr->_HasEvent) {
+        EventPtr->_HasEvent = false;
+        X_UnlockMutex(&EventPtr->_Mutex);
+        return;
+    }
+    X_WaitForConditionalVariable(&EventPtr->_CondVar, &EventPtr->_Mutex);
+    EventPtr->_HasEvent = false;
+    X_UnlockMutex(&EventPtr->_Mutex);
+}
+
+X_API void X_NotifyAutoResetEvent(XelAutoResetEvent * EventPtr)
+{
+    X_RuntimeAssert(X_LockMutex(&EventPtr->_Mutex), "X_WaitForAutoResetEvent should always lock internal mutex");
+    if(EventPtr->_HasEvent) {
+        X_UnlockMutex(&EventPtr->_Mutex);
+        return;
+    }
+    EventPtr->_HasEvent = true;
+    X_NotifyConditionalVariable(&EventPtr->_CondVar);
+    X_UnlockMutex(&EventPtr->_Mutex);
+}
 
 #endif

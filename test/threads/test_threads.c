@@ -4,6 +4,8 @@
 XelMutex Mutex;
 XelConditionalVariable CondVar;
 
+XelAutoResetEvent Event;
+
 void SubThread(void * ContextPtr)
 {
     printf("SubThreadContextPtr=%p, routine=%p\n", ContextPtr, (void*)SubThread);
@@ -14,7 +16,9 @@ void SubThread(void * ContextPtr)
         printf("SubThread notify\n");
         X_UnlockMutex(&Mutex);
     } while(false);
+
     X_SleepMS(100);
+    X_NotifyAutoResetEvent(&Event);
     printf("SubThread exits\n");
 }
 
@@ -22,6 +26,7 @@ int main(int argc, char * argv[])
 {
     X_InitMutex(&Mutex);
     X_InitConditionalVariable(&CondVar);
+    X_InitAutoResetEvent(&Event);
 
     XelThreadId ThreadId;
     if (!X_StartThread(&ThreadId, SubThread, SubThread)) {
@@ -36,9 +41,15 @@ int main(int argc, char * argv[])
         X_UnlockMutex(&Mutex);
     } while(false);
 
+    do {
+        X_WaitForAutoResetEvent(&Event);
+        printf("AutoResetEvent Triggered\n");
+    } while(false);
+
     X_JoinThread(ThreadId);
     printf("SubThread joint\n");
 
+    X_CleanAutoResetEvent(&Event);
     X_CleanConditionalVariable(&CondVar);
     X_CleanMutex(&Mutex);
 
