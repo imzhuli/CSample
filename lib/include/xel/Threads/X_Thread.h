@@ -9,9 +9,19 @@ X_CNAME_BEGIN
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <process.h>
+#include <synchapi.h>
 
 typedef HANDLE XelThreadId;
+
+struct XelMutex
+{
+    CRITICAL_SECTION _CriticalSection;
+};
+
+struct XelConditionalVariable
+{
+    CONDITION_VARIABLE _CondVar;
+};
 
 #elif defined(X_SYSTEM_LINUX) || defined(X_SYSTEM_MACOS) || defined(X_SYSTEM_IOS)
 
@@ -29,14 +39,6 @@ struct XelConditionalVariable
     pthread_cond_t _Cond;
     bool           _StopWaiting;
 };
-
-struct XelAutoResetEvent
-{
-    struct XelMutex                 _Mutex;
-    struct XelConditionalVariable   _CondVar;
-    bool                            _HasEvent;
-};
-
 
 #else
 #error "unsupported platform"
@@ -62,6 +64,12 @@ X_API void X_NotifyConditionalVariable(XelConditionalVariable * CondPtr);
 X_API void X_NotifyAllConditionalVariables(XelConditionalVariable * CondPtr);
 X_API void X_WaitForConditionalVariable(XelConditionalVariable * CondPtr, XelMutex * MutexPtr);
 
+struct XelAutoResetEvent
+{
+    struct XelMutex                 _Mutex;
+    struct XelConditionalVariable   _CondVar;
+    bool                            _HasEvent;
+};
 typedef struct XelAutoResetEvent XelAutoResetEvent;
 X_API bool X_InitAutoResetEvent(XelAutoResetEvent * EventPtr);
 X_API void X_CleanAutoResetEvent(XelAutoResetEvent * EventPtr);

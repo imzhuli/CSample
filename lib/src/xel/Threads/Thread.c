@@ -23,7 +23,7 @@ static void XTRW_Delete(XelThreadRoutineWrapper * WrapperPtr)
 
 #if defined(X_SYSTEM_WINDOWS)
 
-#include <synchapi.h>
+#include <process.h>
 
 static unsigned X_ThreadWrapperProc(void* ContextPtr) // work with _beginthreadex, not _beginthread
 {
@@ -261,6 +261,9 @@ void X_WaitForConditionalVariable(XelConditionalVariable * CondPtr, XelMutex * M
     }
 }
 
+#endif
+
+
 // AutoResetEvent
 
 bool X_InitAutoResetEvent(XelAutoResetEvent * EventPtr)
@@ -309,4 +312,3 @@ X_API void X_NotifyAutoResetEvent(XelAutoResetEvent * EventPtr)
     X_UnlockMutex(&EventPtr->_Mutex);
 }
 
-#endif
