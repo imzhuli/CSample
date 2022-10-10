@@ -4,13 +4,11 @@ project(sample_${libname} C CXX)
 include_directories(
 	../lib/src/
 	../lib/include/
-	${LUA_INCLUDE_DIR}
 	)
 link_directories(
 	)
 
 set(shared_lib_dependency_private
-	${LUA_LIBRARIES}
 )
 
 function(add_sub_test sub_dir_name)
