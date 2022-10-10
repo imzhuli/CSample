@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-#include <xel/X_GetOpts.h>
+#include <xel/Util/X_GetOpt.h>
 #include <string.h>
 #include <stdio.h>
 

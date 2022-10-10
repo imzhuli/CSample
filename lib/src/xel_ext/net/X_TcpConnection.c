@@ -155,8 +155,8 @@ bool XTC_InitConnect(XelIoContext * IoContextPtr, XelTcpConnection * TcpConnecti
 		return false;
 	}
 
-	XelInAddr  RemoteSinAddr = { 0 };
-	XelIn6Addr RemoteSin6Addr = { 0 };
+	XelInAddr  RemoteSinAddr = XEL_IN_ADDR_INIT;
+	XelIn6Addr RemoteSin6Addr = XEL_IN6_ADDR_INIT;
 	XelIoEventBase * EventBasePtr = &TcpConnectionPtr->_IoEventBase;
 	if (!XIEB_Init(EventBasePtr)) {
 		X_FatalAbort("Failed to init event base");

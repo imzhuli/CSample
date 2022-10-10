@@ -1,4 +1,4 @@
-#include <xel/X_GetOpts.h>
+#include <xel/Util/X_GetOpt.h>
 #include <stdio.h>
 
 int main(int argc, char * argv[])
@@ -22,7 +22,7 @@ int main(int argc, char * argv[])
             break;
         }
 
-        printf("Option: %c, optopt: %c, last_arg=%s \n", (char)opt, (char)X_OptOpt, (X_OptArg ? X_OptArg : ":nil"));
+        printf("Option: %c, X_OptOpt: %c, last_arg=%s \n", (char)opt, (char)X_OptOpt, (X_OptArg ? X_OptArg : ":nil"));
         switch(opt) {
             case 'a':
                 continue;

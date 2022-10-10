@@ -15,7 +15,6 @@ if (CMAKE_C_COMPILER_ID STREQUAL "MSVC")
 	if (CMAKE_BUILD_TYPE STREQUAL "Release")
 		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
 	endif()
-	set(cpp Threads::Threads)
 else()
 	set(CMAKE_C_STANDARD 11)
 
