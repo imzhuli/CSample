@@ -207,6 +207,10 @@ void XIEB_ResumeReading(XelIoEventBase * EventBasePtr)
 X_API void XIEB_SuspendReading(XelIoEventBase * EventBasePtr)
 {
     EventBasePtr->_EnableReadingEvent = false;
+    if (!EventBasePtr->_IoContextPtr || XIC_IsProcessing(EventBasePtr->_IoContextPtr, EventBasePtr)) {
+        return;
+    }
+    XIC_UpdateEvents(EventBasePtr->_IoContextPtr, EventBasePtr);
 }
 
 X_API void XIEB_MarkWriting(XelIoEventBase * EventBasePtr)
