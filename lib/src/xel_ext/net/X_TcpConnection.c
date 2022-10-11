@@ -306,15 +306,15 @@ static void PreprocessRemainReadings(XelIoUserEvent * TcpConnectionEventNodePtr)
 
 void XTC_SuspendReading(XelTcpConnection * TcpConnectionPtr)
 {
+	XIEB_SuspendReading(&TcpConnectionPtr->_IoEventBase);
+}
+
+void XTC_ResumeReading(XelTcpConnection * TcpConnectionPtr)
+{
 	XIEB_ResumeReading(&TcpConnectionPtr->_IoEventBase);
 	if (TcpConnectionPtr->_ReadDataSize && TcpConnectionPtr->_IoEventBase._IoContextPtr) {
 		XelVariable ContextVar = { .Ptr = TcpConnectionPtr};
 		XIUE_SetEventProc(&TcpConnectionPtr->_ExtraIntenalEventNode, PreprocessRemainReadings, ContextVar);
 		XIC_PushUserEvent(TcpConnectionPtr->_IoEventBase._IoContextPtr, &TcpConnectionPtr->_ExtraIntenalEventNode);
 	}
-}
-
-void XTC_ResumeReading(XelTcpConnection * TcpConnectionPtr)
-{
-	XIEB_SuspendReading(&TcpConnectionPtr->_IoEventBase);
 }
