@@ -70,14 +70,22 @@ X_API void X_WaitForConditionalVariable(XelConditionalVariable * CondPtr, XelMut
 #endif
 
 #ifndef XEL_LACK_ATOMIC
-#include <stdatomic.h>
+    #ifdef X_SYSTEM_WINDOWS
+        #include <winnt.h>
+    #else
+        #include <stdatomic.h>
+    #endif
 #else
 #endif
 
 struct XelSpinlock
 {
 #ifndef XEL_LACK_ATOMIC
-    atomic_flag _Flag;
+    #ifdef X_SYSTEM_WINDOWS
+        volatile LONG    _WinFlag;
+    #else
+        atomic_flag      _Flag;
+    #endif
 #else
     XelMutex    _Mutex;
 #endif

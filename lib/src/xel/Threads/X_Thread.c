@@ -307,8 +307,12 @@ void X_InitSpinlock(XelSpinlock * LockPtr)
 #if defined(XEL_LACK_ATOMIC)
     X_InitMutex(&LockPtr->_Mutex);
 #else
-    atomic_flag InitValue = ATOMIC_FLAG_INIT;
-    LockPtr->_Flag = InitValue;
+    #ifdef X_SYSTEM_WINDOWS
+        LockPtr->_WinFlag = 0;
+    #else
+        atomic_flag InitValue = ATOMIC_FLAG_INIT;
+        LockPtr->_Flag = InitValue;
+    #endif
 #endif
 }
 
@@ -326,9 +330,15 @@ void X_AcquireSpinlock(XelSpinlock * LockPtr)
 #if defined(XEL_LACK_ATOMIC)
     X_LockMutex(&LockPtr->_Mutex);
 #else
-    while(atomic_flag_test_and_set(&LockPtr->_Flag)) {
-        X_Pass();
-    }
+    #ifdef X_SYSTEM_WINDOWS
+        while(InterlockedCompareExchange(&LockPtr->_WinFlag, 1, 0)) {
+            X_Pass();
+        }
+    #else
+        while(atomic_flag_test_and_set(&LockPtr->_Flag)) {
+            X_Pass();
+        }
+    #endif
 #endif
 }
 
@@ -337,7 +347,11 @@ X_API void X_ReleaseSpinlock(XelSpinlock * LockPtr)
 #if defined(XEL_LACK_ATOMIC)
     X_UnlockMutex(&LockPtr->_Mutex);
 #else
-    atomic_flag_clear(&LockPtr->_Flag);
+    #ifdef X_SYSTEM_WINDOWS
+        InterlockedExchange(&LockPtr->_WinFlag, 0);
+    #else
+        atomic_flag_clear(&LockPtr->_Flag);
+    #endif
 #endif
 }
 
