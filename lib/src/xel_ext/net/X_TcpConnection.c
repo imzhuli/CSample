@@ -37,6 +37,7 @@ static void XTC_FlushData(XelTcpConnection * TcpConnectionPtr)
 		if ((size_t)WB < BufferPtr->BufferDataSize) {
 			BufferPtr->BufferDataSize -= WB;
 			memmove(BufferPtr->Buffer, BufferPtr->Buffer + WB, BufferPtr->BufferDataSize);
+			TcpConnectionPtr->_WriteBufferDataSize -= WB;
 			break;
 		}
 	}
@@ -151,6 +152,7 @@ bool XTC_InitConnect(XelIoContext * IoContextPtr, XelTcpConnection * TcpConnecti
 	XIUE_Init(&TcpConnectionPtr->_ExtraIntenalEventNode);
 
 	TcpConnectionPtr->_ReadDataSize = 0;
+	TcpConnectionPtr->_WriteBufferDataSize = 0;
 	if (!XWBC_Init(&TcpConnectionPtr->_WriteBufferChain, NULL)) {
 		return false;
 	}
@@ -242,7 +244,6 @@ void XTC_Close(XelTcpConnection * TcpConnectionPtr)
 	XelCloseSocket(TcpConnectionPtr->_Socket);
 	TcpConnectionPtr->_Socket = XelInvalidSocket;
 	TcpConnectionPtr->_Status = XTCS_Closed;
-	TcpConnectionPtr->_ReadDataSize = 0;
 }
 
 void XTC_Clean(XelTcpConnection * TcpConnectionPtr)
@@ -260,8 +261,10 @@ size_t XTC_PostData(XelTcpConnection * TcpConnectionPtr, const void * DataPtr_, 
 	assert(TcpConnectionPtr->_Status != XTCS_Closed);
 	XelUByte * DataPtr = (XelUByte *)DataPtr_;
 	XelWriteBufferChain * WriteBufferChainPtr = &TcpConnectionPtr->_WriteBufferChain;
-	if (XIEB_GetWritingMark(&TcpConnectionPtr->_IoEventBase) || !XWBC_IsEmpty(WriteBufferChainPtr)) {
-		return XWBC_PushBack(WriteBufferChainPtr, DataPtr, Size);
+	if (XIEB_GetWritingMark(&TcpConnectionPtr->_IoEventBase) || !XWBC_IsEmpty(WriteBufferChainPtr)) {		
+		size_t PushSize = XWBC_PushBack(WriteBufferChainPtr, DataPtr, Size);
+		TcpConnectionPtr->_WriteBufferDataSize += PushSize;
+		return PushSize;
 	}
 	// send
 #if defined (X_SYSTEM_LINUX)
@@ -280,7 +283,9 @@ size_t XTC_PostData(XelTcpConnection * TcpConnectionPtr, const void * DataPtr_, 
 
 	if (Size) {
 		XIEB_MarkWriting(&TcpConnectionPtr->_IoEventBase);
-		size_t Total = (size_t)WB + XWBC_PushBack(WriteBufferChainPtr, DataPtr, Size);
+		size_t PushSize = XWBC_PushBack(WriteBufferChainPtr, DataPtr, Size);
+		TcpConnectionPtr->_WriteBufferDataSize += PushSize;
+		size_t Total = (size_t)WB + PushSize;
 		return Total;
 	}
 	return WB;

@@ -38,8 +38,8 @@ typedef struct {
 X_PRIVATE XelWriteBuffer_Allocator * const XWB_DefaultAllocatorPtr;
 
 typedef struct XelWriteBufferChain {
-    XelWriteBuffer * FirstPtr;
-    XelWriteBuffer * LastPtr;
+    XelWriteBuffer *            FirstPtr;
+    XelWriteBuffer *            LastPtr;
     XelWriteBuffer_Allocator *  AllocatorPtr;
 } XelWriteBufferChain;
 

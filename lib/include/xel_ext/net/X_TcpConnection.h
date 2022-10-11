@@ -35,11 +35,13 @@ struct XelTcpConnection
 	XelUByte                  _ReadBuffer[XelPacketMaxSize]; // at least of sizeof a full packet
 	size_t                    _ReadDataSize;
 	XelWriteBufferChain       _WriteBufferChain;
+	size_t                    _WriteBufferDataSize;
 	XelTcpConnectionListener  _EventListener;
 	
 	XelIoUserEvent            _ExtraIntenalEventNode;
 };
-X_STATIC_INLINE bool XTC_IsConnected(const XelTcpConnection * TcpConnectionPtr) { return TcpConnectionPtr->_Status == XTCS_Connected; }
+X_STATIC_INLINE bool   XTC_IsConnected(const XelTcpConnection * TcpConnectionPtr) { return TcpConnectionPtr->_Status == XTCS_Connected; }
+X_STATIC_INLINE size_t XTC_GetWriteBufferDataSize(const XelTcpConnection * TcpConnectionPtr) { return TcpConnectionPtr->_WriteBufferDataSize; }
 
 X_API bool    XTC_InitConnect(XelIoContext * IoContext, XelTcpConnection * TcpConnectionPtr, const char * IpString, uint16_t port, const XelTcpConnectionListener * ListenerPtr);
 X_API void    XTC_Close(XelTcpConnection * TcpConnectionPtr);
