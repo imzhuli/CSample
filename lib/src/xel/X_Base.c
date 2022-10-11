@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+XelVariable XEL_VARIABLE_NONE = XEL_VARIABLE_INIT;
+
 #ifndef NDEBUG
 void X_DbgInfo(const char * fmt, ...)
 {

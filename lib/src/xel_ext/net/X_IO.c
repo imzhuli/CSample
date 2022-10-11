@@ -69,6 +69,15 @@ static void XIC_UpdateEvents(XelIoContext * ContextPtr, XelIoEventBase * EventBa
 void XIC_LoopOnce(XelIoContext * ContextPtr, int TimeoutMS)
 {
     assert(!ContextPtr->ProcessingTargerPtr);
+    XelListForwardIterator Iter = XL_Begin(&ContextPtr->UserEventList);
+    XelListForwardIterator IterEnd = XL_End(&ContextPtr->UserEventList);
+    while(!XLFI_IsEqual(Iter, IterEnd)) {
+        XelIoUserEvent * EventNodePtr = X_Entry(XLFI_Get(Iter), XelIoUserEvent, UserEventNode);
+        XIUE_Detach(EventNodePtr);
+        EventNodePtr->UserEventProc(EventNodePtr);
+        Iter = XLFI_Next(Iter);
+    }
+
 #if defined(X_SYSTEM_LINUX)
     struct epoll_event Events[LOOP_ONCE_MAX_EVENT_NUMBER];
     int Total = epoll_wait(ContextPtr->EventPoller, Events, LOOP_ONCE_MAX_EVENT_NUMBER, TimeoutMS);

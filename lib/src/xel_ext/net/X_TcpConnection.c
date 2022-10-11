@@ -148,10 +148,10 @@ bool XTC_InitConnect(XelIoContext * IoContextPtr, XelTcpConnection * TcpConnecti
 {
 	TcpConnectionPtr->_Socket = XelInvalidSocket;
 	TcpConnectionPtr->_Status = XTCS_Closed;
+	XIUE_Init(&TcpConnectionPtr->_ExtraIntenalEventNode);
 
 	TcpConnectionPtr->_ReadDataSize = 0;
 	if (!XWBC_Init(&TcpConnectionPtr->_WriteBufferChain, NULL)) {
-		X_FatalAbort("Failed to write buffer chain");
 		return false;
 	}
 
@@ -159,7 +159,8 @@ bool XTC_InitConnect(XelIoContext * IoContextPtr, XelTcpConnection * TcpConnecti
 	XelIn6Addr RemoteSin6Addr = XEL_IN6_ADDR_INIT;
 	XelIoEventBase * EventBasePtr = &TcpConnectionPtr->_IoEventBase;
 	if (!XIEB_Init(EventBasePtr)) {
-		X_FatalAbort("Failed to init event base");
+		XWBC_Clean(&TcpConnectionPtr->_WriteBufferChain);
+		XIUE_Clean(&TcpConnectionPtr->_ExtraIntenalEventNode);
 		return false;
 	}
 
@@ -169,6 +170,7 @@ bool XTC_InitConnect(XelIoContext * IoContextPtr, XelTcpConnection * TcpConnecti
 		if (-1 == Fd) {
 			XIEB_Clean(&TcpConnectionPtr->_IoEventBase);
 			XWBC_Clean(&TcpConnectionPtr->_WriteBufferChain);
+			XIUE_Clean(&TcpConnectionPtr->_ExtraIntenalEventNode);
 			return false;
 		}
 		XS_SetNonBlocking(Fd);
@@ -181,6 +183,7 @@ bool XTC_InitConnect(XelIoContext * IoContextPtr, XelTcpConnection * TcpConnecti
 				close(TcpConnectionPtr->_Socket);
 				XIEB_Clean(EventBasePtr);
 				XWBC_Clean(&TcpConnectionPtr->_WriteBufferChain);
+				XIUE_Clean(&TcpConnectionPtr->_ExtraIntenalEventNode);
 				return false;
 			}
 			TcpConnectionPtr->_Socket = Fd;
@@ -201,6 +204,7 @@ bool XTC_InitConnect(XelIoContext * IoContextPtr, XelTcpConnection * TcpConnecti
 			TcpConnectionPtr->_Status = XTCS_Closed;
 			XIEB_Clean(EventBasePtr);
 			XWBC_Clean(&TcpConnectionPtr->_WriteBufferChain);
+			XIUE_Clean(&TcpConnectionPtr->_ExtraIntenalEventNode);
 			return false;
 		}
 		XIEB_ResumeReading(EventBasePtr);
@@ -208,12 +212,14 @@ bool XTC_InitConnect(XelIoContext * IoContextPtr, XelTcpConnection * TcpConnecti
 	else if (X_StrToIpv6(&RemoteSin6Addr, IpString)) {
 		XIEB_Clean(EventBasePtr);
 		XWBC_Clean(&TcpConnectionPtr->_WriteBufferChain);
+		XIUE_Clean(&TcpConnectionPtr->_ExtraIntenalEventNode);
 		X_FatalAbort("XTC_InitConnect ipv6 not supported");
 		return false;
 	}
 	else {
 		XIEB_Clean(&TcpConnectionPtr->_IoEventBase);
 		XWBC_Clean(&TcpConnectionPtr->_WriteBufferChain);
+		XIUE_Clean(&TcpConnectionPtr->_ExtraIntenalEventNode);
 		X_FatalAbort("XTC_InitConnect invalid ip type");
 		return false;
 	}
@@ -231,7 +237,8 @@ void XTC_Close(XelTcpConnection * TcpConnectionPtr)
 	if (TcpConnectionPtr->_Status == XTCS_Closed) {
 		return;
 	}
-	XIEB_Unbind(&TcpConnectionPtr->_IoEventBase);
+	XIEB_Unbind(&TcpConnectionPtr->_IoEventBase);	
+	XIUE_Detach(&TcpConnectionPtr->_ExtraIntenalEventNode);
 	XelCloseSocket(TcpConnectionPtr->_Socket);
 	TcpConnectionPtr->_Socket = XelInvalidSocket;
 	TcpConnectionPtr->_Status = XTCS_Closed;
@@ -245,6 +252,7 @@ void XTC_Clean(XelTcpConnection * TcpConnectionPtr)
 	}
 	XIEB_Clean(&TcpConnectionPtr->_IoEventBase);
 	XWBC_Clean(&TcpConnectionPtr->_WriteBufferChain);
+	XIUE_Clean(&TcpConnectionPtr->_ExtraIntenalEventNode);
 }
 
 size_t XTC_PostData(XelTcpConnection * TcpConnectionPtr, const void * DataPtr_, size_t Size)
@@ -280,4 +288,33 @@ size_t XTC_PostData(XelTcpConnection * TcpConnectionPtr, const void * DataPtr_, 
 
 	X_FatalAbort("XTC_PostData not implemented");
 	return 0;
+}
+
+// Refs to IoContext 
+//
+// typedef void (*XelIoUserEventProc)(XelIoUserEvent * UserEventNodePtr);
+// struct XelIoUserEvent {
+//     XelIoUserEventProc  UserEventProc;
+//     XelVariable         UserEventContext;
+//     XelListNode         UserEventNode;
+// };
+static void PreprocessRemainReadings(XelIoUserEvent * TcpConnectionEventNodePtr)
+{
+	XelTcpConnection * TcpConnectionPtr = TcpConnectionEventNodePtr->UserEventContext.Ptr;
+	XTC_EventCallback(&TcpConnectionPtr->_IoEventBase, XIET_In);
+}
+
+void XTC_SuspendReading(XelTcpConnection * TcpConnectionPtr)
+{
+	XIEB_ResumeReading(&TcpConnectionPtr->_IoEventBase);
+	if (TcpConnectionPtr->_ReadDataSize && TcpConnectionPtr->_IoEventBase._IoContextPtr) {
+		XelVariable ContextVar = { .Ptr = TcpConnectionPtr};
+		XIUE_SetEventProc(&TcpConnectionPtr->_ExtraIntenalEventNode, PreprocessRemainReadings, ContextVar);
+		XIC_PushUserEvent(TcpConnectionPtr->_IoEventBase._IoContextPtr, &TcpConnectionPtr->_ExtraIntenalEventNode);
+	}
+}
+
+void XTC_ResumeReading(XelTcpConnection * TcpConnectionPtr)
+{
+	XIEB_SuspendReading(&TcpConnectionPtr->_IoEventBase);
 }

@@ -209,7 +209,9 @@ union XelVariable
 	struct { int32_t  x, y; }     IV2;
 	struct { uint32_t x, y; }     UV32;
 };
-X_STATIC_INLINE XelVariable XV_Zero() { XelVariable InitObject = {{0}}; return InitObject; }
+#define XEL_VARIABLE_INIT {{0}}
+X_API XelVariable XEL_VARIABLE_NONE;
+X_STATIC_INLINE XelVariable XV_None() { XelVariable InitObject = {{0}}; return InitObject; }
 
 typedef struct XelOptionalVariable XelOptionalVariable;
 struct XelOptionalVariable

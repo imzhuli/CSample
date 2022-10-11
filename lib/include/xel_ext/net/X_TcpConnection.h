@@ -36,6 +36,8 @@ struct XelTcpConnection
 	size_t                    _ReadDataSize;
 	XelWriteBufferChain       _WriteBufferChain;
 	XelTcpConnectionListener  _EventListener;
+	
+	XelIoUserEvent            _ExtraIntenalEventNode;
 };
 X_STATIC_INLINE bool XTC_IsConnected(const XelTcpConnection * TcpConnectionPtr) { return TcpConnectionPtr->_Status == XTCS_Connected; }
 
@@ -45,6 +47,5 @@ X_API void    XTC_Clean(XelTcpConnection * TcpConnectionPtr);
 X_API size_t  XTC_PostData(XelTcpConnection * TcpConntionPtr, const void * DataPtr, size_t Size);
 X_API void    XTC_SuspendReading(XelTcpConnection * TcpConntionPtr);
 X_API void    XTC_ResumeReading(XelTcpConnection * TcpConnectionPtr);
-
 
 X_CNAME_END

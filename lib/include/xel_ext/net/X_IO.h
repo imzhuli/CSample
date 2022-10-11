@@ -107,6 +107,29 @@ struct XelIoContext {
     unsigned char     Reserved [16];
 };
 
+typedef struct XelIoUserEvent XelIoUserEvent;
+typedef void (*XelIoUserEventProc)(XelIoUserEvent * UserEventNodePtr);
+struct XelIoUserEvent {
+    XelIoUserEventProc  UserEventProc;
+    XelVariable         UserEventContext;
+    XelListNode         UserEventNode;
+};
+X_STATIC_INLINE void XIUE_Init(XelIoUserEvent * UserEventPtr) {
+    XelIoUserEvent InitObject = { NULL };
+    *UserEventPtr = InitObject;
+}
+X_STATIC_INLINE void XIUE_SetEventProc(XelIoUserEvent * UserEventPtr, XelIoUserEventProc Callback, XelVariable Context) {
+    UserEventPtr->UserEventProc = Callback;
+    UserEventPtr->UserEventContext = Context;
+}
+X_STATIC_INLINE void XIUE_Detach(XelIoUserEvent * UserEventPtr) {
+    XLN_Detach(&UserEventPtr->UserEventNode);
+}
+X_STATIC_INLINE void XIUE_Clean(XelIoUserEvent * UserEventPtr) {
+    XIUE_Detach(UserEventPtr);
+    XIUE_SetEventProc(UserEventPtr, NULL, XV_None());
+}
+
 struct XelIoEventBase {
     // managed by the following functions
     XelIoContext *        _IoContextPtr;
@@ -121,6 +144,7 @@ struct XelIoEventBase {
 X_API bool XIC_Init(XelIoContext * ContextPtr);
 X_API void XIC_Clean(XelIoContext * ContextPtr);
 X_API void XIC_LoopOnce(XelIoContext * ContextPtr, int TimeoutMS);
+X_STATIC_INLINE void XIC_PushUserEvent(XelIoContext * ContextPtr, XelIoUserEvent * UserEventNodePtr) { assert(!XLN_IsLinked(&UserEventNodePtr->UserEventNode)); XL_AddTail(&ContextPtr->UserEventList, &UserEventNodePtr->UserEventNode); }
 X_STATIC_INLINE bool XIC_IsProcessing(XelIoContext * ContextPtr, XelIoEventBase * EventBasePtr) { return ContextPtr->ProcessingTargerPtr == EventBasePtr; }
 
 X_API void XS_SetNonBlocking(XelSocket Sock);
