@@ -38,10 +38,10 @@ XelString XS_NewString(const char * StringPtr)
     return Ret;
 }
 
-XelString XS_Duplicate(XelString Str)
+XelString XS_Duplicate(XelConstString Str)
 {
     XelString Ret = XS_New();
-    __XelString* RealPtr = (__XelString *)Str;
+    const __XelString* RealPtr = (const __XelString *)Str;
     XS_SetData(Ret, RealPtr->DataPtr, RealPtr->DataLength);
     return Ret;
 }
@@ -61,15 +61,15 @@ void XS_Delete(XelString Str)
     free(RealPtr);
 }
 
-const char * XS_GetData(XelString Str)
+const char * XS_GetData(XelConstString Str)
 {
-    __XelString* RealPtr = (__XelString *)Str;
+    const __XelString* RealPtr = (const __XelString *)Str;
     return  RealPtr->DataPtr;
 }
 
-size_t XS_GetLength(XelString Str)
+size_t XS_GetLength(XelConstString Str)
 {
-    __XelString* RealPtr = (__XelString *)Str;
+    const __XelString* RealPtr = (const __XelString *)Str;
     return  RealPtr->DataLength;
 }
 
@@ -97,9 +97,9 @@ void XS_SetString(XelString Str, const char * StringPtr)
     XS_SetData(Str, StringPtr, strlen(StringPtr));
 }
 
-void XS_Append(XelString Str, XelString TailStr)
+void XS_Append(XelString Str, XelConstString TailStr)
 {
-    __XelString* RealPtr = (__XelString *)TailStr;
+    const __XelString* RealPtr = (const __XelString *)TailStr;
     XS_AppendData(Str, RealPtr->DataPtr, RealPtr->DataLength);
 }
 
@@ -133,9 +133,9 @@ void XS_AppendString(XelString Str, const char * StringPtr)
     XS_AppendData(Str, StringPtr, strlen(StringPtr));
 }
 
-XelString XS_SubString(XelString Str, size_t Index, size_t Length)
+XelString XS_SubString(XelConstString Str, size_t Index, size_t Length)
 {
-    __XelString* RealPtr = (__XelString *)Str;
+    const __XelString* RealPtr = (const __XelString *)Str;
     if (Index >= RealPtr->DataLength) {
         return XS_New();
     }
@@ -145,7 +145,7 @@ XelString XS_SubString(XelString Str, size_t Index, size_t Length)
     return XS_NewData(RealPtr->DataPtr + RealPtr->DataLength, Length);
 }
 
-XelString XS_Concat(XelString Str1, XelString Str2)
+XelString XS_Concat(XelConstString Str1, XelConstString Str2)
 {
     XelString Ret = XS_Duplicate(Str1);
     XS_Append(Ret, Str2);
