@@ -14,8 +14,9 @@ struct XelRBNode {
 
 typedef struct XelRBInsertSlot
 {
-    XelRBNode * ParentPtr;
-    XelRBNode ** SubNodeRefPtr;
+    XelRBNode *   InsertParentPtr;
+    XelRBNode **  InsertSubNodeRefPtr;
+    XelRBNode *   PreviousNodePtr;
 } XelRBInsertSlot;
 
 X_STATIC_INLINE void XRBN_Init(XelRBNode * NodePtr) {
@@ -151,10 +152,10 @@ X_STATIC_INLINE XelRBNode *XRBT_Find(XelRBTree * TreePtr, XRBT_KeyCompare * Comp
 }
 
 X_STATIC_INLINE XelRBInsertSlot XRBT_FindInsertSlot(XelRBTree * TreePtr, XRBT_KeyCompare * CompFunc, const void *KeyPtr) {
-    XelRBInsertSlot InsertNode = { NULL, NULL };
+    XelRBInsertSlot InsertNode = { NULL, NULL, NULL };
     XelRBNode ** CurrNodeRefPtr = &TreePtr->RootPtr;
     while (*CurrNodeRefPtr) {
-        InsertNode.ParentPtr = *CurrNodeRefPtr;
+        InsertNode.InsertParentPtr = *CurrNodeRefPtr;
         int CompareResult = (*CompFunc)(TreePtr, KeyPtr, *CurrNodeRefPtr);
         if (CompareResult < 0) {
             CurrNodeRefPtr = &(*CurrNodeRefPtr)->LeftNodePtr;
@@ -163,31 +164,25 @@ X_STATIC_INLINE XelRBInsertSlot XRBT_FindInsertSlot(XelRBTree * TreePtr, XRBT_Ke
             CurrNodeRefPtr = &(*CurrNodeRefPtr)->RightNodePtr;
         }
         else {
+            InsertNode.PreviousNodePtr = InsertNode.InsertParentPtr;
             CurrNodeRefPtr = NULL;
             break;
         }
     }
-    InsertNode.SubNodeRefPtr = CurrNodeRefPtr;
+    InsertNode.InsertSubNodeRefPtr = CurrNodeRefPtr;
     return InsertNode;
 }
 
-/* if a FindInsertSlot result indicates replacement, return the to-bo replaced node */
-X_STATIC_INLINE XelRBNode * XRBT_Original(XelRBInsertSlot InsertSlot) {
-    if (InsertSlot.SubNodeRefPtr) {
-        return NULL;
-    }
-    return InsertSlot.ParentPtr;
-}
-
+/**
+ * @brief Replace a node, an old one MUST exist
+ * 
+ * @return X_STATIC_INLINE 
+ */
 X_STATIC_INLINE void XRBT_Replace(XelRBTree * TreePtr, XelRBInsertSlot InsertSlot, XelRBNode * NodePtr)
 {
-    assert(!InsertSlot.SubNodeRefPtr);
-    if (!InsertSlot.ParentPtr) { // root
-        TreePtr->RootPtr = NodePtr;
-        return;
-    }
+    assert(!InsertSlot.InsertParentPtr && !InsertSlot.InsertSubNodeRefPtr && InsertSlot.InsertParentPtr == InsertSlot.PreviousNodePtr);
 
-    XelRBNode * ReplaceNodePtr = InsertSlot.ParentPtr;
+    XelRBNode * ReplaceNodePtr = InsertSlot.InsertParentPtr;
     if ((NodePtr->LeftNodePtr = ReplaceNodePtr->LeftNodePtr)) {
         NodePtr->LeftNodePtr->ParentPtr = NodePtr;
     }
@@ -216,8 +211,15 @@ X_STATIC_INLINE void XRBT_Replace(XelRBTree * TreePtr, XelRBInsertSlot InsertSlo
 #define XRBT_FOR_EACH_SAFE(_iter, _tree) \
     for (XelRBNode *_iter = XRBT_First((_tree)), *_safe = XRBN_Next(_iter); _iter; _iter = _safe, _safe = XRBN_Next(_iter))
 
-
+/**
+ * @brief Insert a new node at a insert slot
+ * @return 
+ */
 X_API void         XRBT_Insert(XelRBTree * TreePtr, XelRBInsertSlot InsertSlot, XelRBNode * NodePtr);
+/**
+ * @brief Insert a node or replace an old one which matches the key, if that exists
+ * @return Pointer to the orignal node, if it exitst. NULL, if an insertion takes place.
+ */
 X_API XelRBNode *  XRBT_InsertOrAssign(XelRBTree * TreePtr, XelRBNode * NodePtr, XRBT_KeyCompare * CompFunc, const void * KeyPtr);
 X_API void         XRBT_Remove(XelRBTree * TreePtr, XelRBNode * NodePtr);
 X_API bool         XRBT_Check(XelRBTree * TreePtr);

@@ -144,14 +144,14 @@ static void XRBT_RightRotate(XelRBTree * TreePtr, XelRBNode * NodePtr)
 
 void XRBT_Insert(XelRBTree * TreePtr, XelRBInsertSlot InsertSlot, XelRBNode * NodePtr)
 {
-    if (!InsertSlot.ParentPtr) { // root
+    if (!InsertSlot.InsertParentPtr) { // root
         TreePtr->RootPtr = NodePtr;
         return;
     }
-    assert(InsertSlot.SubNodeRefPtr);
+    assert(InsertSlot.InsertSubNodeRefPtr);
 
-    *InsertSlot.SubNodeRefPtr = NodePtr;
-    NodePtr->ParentPtr = InsertSlot.ParentPtr;
+    *InsertSlot.InsertSubNodeRefPtr = NodePtr;
+    NodePtr->ParentPtr = InsertSlot.InsertParentPtr;
     XRBN_MarkRed(NodePtr);
 
     XelRBNode * FixNodePtr = NodePtr;
@@ -203,14 +203,13 @@ void XRBT_Insert(XelRBTree * TreePtr, XelRBInsertSlot InsertSlot, XelRBNode * No
 
 XelRBNode * XRBT_InsertOrAssign(XelRBTree * TreePtr, XelRBNode * NodePtr, XRBT_KeyCompare * CompFunc, const void * KeyPtr)
 {
-    XelRBInsertSlot InsertSlot = XRBT_FindInsertSlot(TreePtr, CompFunc, KeyPtr);
-    XelRBNode * OriginalNodePtr = XRBT_Original(InsertSlot);
-    if (OriginalNodePtr) {
+    XelRBInsertSlot InsertSlot = XRBT_FindInsertSlot(TreePtr, CompFunc, KeyPtr);    
+    if (InsertSlot.PreviousNodePtr) {
         XRBT_Replace(TreePtr, InsertSlot, NodePtr);
-    } else {
-        XRBT_Insert(TreePtr, InsertSlot, NodePtr);
+        return InsertSlot.PreviousNodePtr;
     }
-    return OriginalNodePtr;
+    XRBT_Insert(TreePtr, InsertSlot, NodePtr);
+    return NULL;
 }
 
 // static inline XelRBNode * XRBT_Minimum(XelRBNode * NodePtr)
