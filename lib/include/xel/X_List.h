@@ -93,10 +93,8 @@ X_STATIC_INLINE bool XL_IsEmpty(XelList * ListPtr)
 	return !XLN_IsLinked(&ListPtr->Head);
 }
 
-X_STATIC_INLINE void XL_Clean(XelList * ListPtr) 
-{
-	assert(XL_IsEmpty(ListPtr));
-}
+X_STATIC_INLINE void XL_TrivialClean(XelList * ListPtr) 
+{}
 
 X_STATIC_INLINE XelListForwardIterator XL_Begin(XelList * ListPtr)
 {

@@ -36,8 +36,7 @@ void XIC_Clean(XelIoContext * ContextPtr)
     if (ContextPtr->EventPoller == XelInvalidEventPoller) {
         return;
     }
-
-    XL_Clean(&ContextPtr->UserEventList);
+    XL_TrivialClean(&ContextPtr->UserEventList);
     #if defined(X_SYSTEM_LINUX)
         close(ContextPtr->EventPoller);
     #elif defined(X_SYSTEM_MACOS) || defined(X_SYSTEM_IOS)

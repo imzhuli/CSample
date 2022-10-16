@@ -112,9 +112,8 @@ X_STATIC_INLINE bool XRBT_IsEmpty(XelRBTree* TreePtr) {
     return !TreePtr->RootPtr;
 }
 
-X_STATIC_INLINE void XRBT_Clean(XelRBTree* TreePtr) {
-    X_RuntimeAssert(XRBT_IsEmpty(TreePtr), "XelRBTree should be empty while cleaning up");
-}
+X_STATIC_INLINE void XRBT_TrivialClean(XelRBTree* TreePtr) 
+{}
 
 // X_STATIC_INLINE void* XRBT_Cast(XelRBTree* TreePtr, size_t NodeMemberOffset) {
 //     if (!TreePtr) {
