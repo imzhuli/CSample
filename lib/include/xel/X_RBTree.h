@@ -220,7 +220,7 @@ X_API void         XRBT_Insert(XelRBTree * TreePtr, XelRBInsertSlot InsertSlot, 
  * @brief Insert a node or replace an old one which matches the key, if that exists
  * @return Pointer to the orignal node, if it exitst. NULL, if an insertion takes place.
  */
-X_API XelRBNode *  XRBT_InsertOrAssign(XelRBTree * TreePtr, XelRBNode * NodePtr, XRBT_KeyCompare * CompFunc, const void * KeyPtr);
+X_API XelRBNode *  XRBT_InsertOrReplace(XelRBTree * TreePtr, XelRBNode * NodePtr, XRBT_KeyCompare * CompFunc, const void * KeyPtr);
 X_API void         XRBT_Remove(XelRBTree * TreePtr, XelRBNode * NodePtr);
 X_API bool         XRBT_Check(XelRBTree * TreePtr);
 

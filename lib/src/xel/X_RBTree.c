@@ -201,7 +201,7 @@ void XRBT_Insert(XelRBTree * TreePtr, XelRBInsertSlot InsertSlot, XelRBNode * No
     XRBN_MarkBlack(TreePtr->RootPtr);
 }
 
-XelRBNode * XRBT_InsertOrAssign(XelRBTree * TreePtr, XelRBNode * NodePtr, XRBT_KeyCompare * CompFunc, const void * KeyPtr)
+XelRBNode * XRBT_InsertOrReplace(XelRBTree * TreePtr, XelRBNode * NodePtr, XRBT_KeyCompare * CompFunc, const void * KeyPtr)
 {
     XelRBInsertSlot InsertSlot = XRBT_FindInsertSlot(TreePtr, CompFunc, KeyPtr);    
     if (InsertSlot.FoundNodePtr) {
