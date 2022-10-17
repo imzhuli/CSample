@@ -16,7 +16,7 @@ typedef struct XelRBInsertSlot
 {
     XelRBNode *   InsertParentPtr;
     XelRBNode **  InsertSubNodeRefPtr;
-    XelRBNode *   PreviousNodePtr;
+    XelRBNode *   FoundNodePtr;
 } XelRBInsertSlot;
 
 X_STATIC_INLINE void XRBN_Init(XelRBNode * NodePtr) {
@@ -113,7 +113,8 @@ X_STATIC_INLINE bool XRBT_IsEmpty(XelRBTree* TreePtr) {
 }
 
 X_STATIC_INLINE void XRBT_TrivialClean(XelRBTree* TreePtr) 
-{}
+{
+}
 
 // X_STATIC_INLINE void* XRBT_Cast(XelRBTree* TreePtr, size_t NodeMemberOffset) {
 //     if (!TreePtr) {
@@ -163,7 +164,7 @@ X_STATIC_INLINE XelRBInsertSlot XRBT_FindInsertSlot(XelRBTree * TreePtr, XRBT_Ke
             CurrNodeRefPtr = &(*CurrNodeRefPtr)->RightNodePtr;
         }
         else {
-            InsertNode.PreviousNodePtr = InsertNode.InsertParentPtr;
+            InsertNode.FoundNodePtr = InsertNode.InsertParentPtr;
             CurrNodeRefPtr = NULL;
             break;
         }
@@ -179,7 +180,7 @@ X_STATIC_INLINE XelRBInsertSlot XRBT_FindInsertSlot(XelRBTree * TreePtr, XRBT_Ke
  */
 X_STATIC_INLINE void XRBT_Replace(XelRBTree * TreePtr, XelRBInsertSlot InsertSlot, XelRBNode * NodePtr)
 {
-    assert(!InsertSlot.InsertParentPtr && !InsertSlot.InsertSubNodeRefPtr && InsertSlot.InsertParentPtr == InsertSlot.PreviousNodePtr);
+    assert(!InsertSlot.InsertParentPtr && !InsertSlot.InsertSubNodeRefPtr && InsertSlot.InsertParentPtr == InsertSlot.FoundNodePtr);
 
     XelRBNode * ReplaceNodePtr = InsertSlot.InsertParentPtr;
     if ((NodePtr->LeftNodePtr = ReplaceNodePtr->LeftNodePtr)) {

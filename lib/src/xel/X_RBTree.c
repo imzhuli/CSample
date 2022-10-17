@@ -204,9 +204,9 @@ void XRBT_Insert(XelRBTree * TreePtr, XelRBInsertSlot InsertSlot, XelRBNode * No
 XelRBNode * XRBT_InsertOrAssign(XelRBTree * TreePtr, XelRBNode * NodePtr, XRBT_KeyCompare * CompFunc, const void * KeyPtr)
 {
     XelRBInsertSlot InsertSlot = XRBT_FindInsertSlot(TreePtr, CompFunc, KeyPtr);    
-    if (InsertSlot.PreviousNodePtr) {
+    if (InsertSlot.FoundNodePtr) {
         XRBT_Replace(TreePtr, InsertSlot, NodePtr);
-        return InsertSlot.PreviousNodePtr;
+        return InsertSlot.FoundNodePtr;
     }
     XRBT_Insert(TreePtr, InsertSlot, NodePtr);
     return NULL;
