@@ -3,6 +3,7 @@
 #include <xel/X_String.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <time.h>
 
 static XelString      LogFilename = NULL;
 static XelLoggerLevel LogLevel = XLL_NONE;
@@ -12,7 +13,7 @@ static XelMutex       LogMutex;
 static bool CheckAndOpenLogfile_NoThreadSafety()
 {
     if (LogFilePtr) {
-        return false;
+        return true;
     }
     if (!LogFilename) {
         return false;
@@ -21,23 +22,42 @@ static bool CheckAndOpenLogfile_NoThreadSafety()
     return LogFilePtr;
 }
 
+static const char LogLevelHint[] =
+{
+    '-',  // silent
+    'E',
+    'W', 
+    'I',
+    'D',
+    'V'
+};
+
 static void Log(XelLoggerLevel DesiredLogLevel, const char * fmt, va_list Vars)
 {
     if (LogLevel < DesiredLogLevel) {
         return;
     }
+    struct tm brokenTime;
+    time_t now = time(NULL);
+    X_LocalTime(&now, &brokenTime);
+
     X_LockMutex(&LogMutex);
-    if (!CheckAndOpenLogfile_NoThreadSafety()) {
-        X_UnlockMutex(&LogMutex);
-        return;
-    }
-
-    vfprintf(LogFilePtr, fmt, Vars);
-    fputc('\n', LogFilePtr);
-    fflush(LogFilePtr);   
-
+    do {
+        if (!CheckAndOpenLogfile_NoThreadSafety()) {
+            X_UnlockMutex(&LogMutex);
+            return;
+        }
+        fprintf(LogFilePtr, "%c-%02d%02d%02d:%02d%02d%02d ", LogLevelHint[(size_t)DesiredLogLevel],
+            brokenTime.tm_year + 1900 - 2000, brokenTime.tm_mon + 1, brokenTime.tm_mday,
+            brokenTime.tm_hour, brokenTime.tm_min, brokenTime.tm_sec
+        );
+        vfprintf(LogFilePtr, fmt, Vars);
+        fputc('\n', LogFilePtr);
+        fflush(LogFilePtr);   
+    } while(false);
     X_UnlockMutex(&LogMutex);
 }
+
 bool X_InitStdLogger(XelLoggerLevel NewLogLevel)
 {
     if (!X_InitMutex(&LogMutex)) {

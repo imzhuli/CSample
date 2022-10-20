@@ -6,8 +6,8 @@ typedef enum XelLoggerLevel
     XLL_NONE,
     XLL_ERROR,
     XLL_WARNING,
-    XLL_DEBUG,
     XLL_INFO,
+    XLL_DEBUG,
     XLL_VERBOSE,
 } XelLoggerLevel;
 

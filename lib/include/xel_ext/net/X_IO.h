@@ -117,6 +117,7 @@ struct XelIoUserEvent {
 X_STATIC_INLINE void XIUE_Init(XelIoUserEvent * UserEventPtr) {
     XelIoUserEvent InitObject = { NULL };
     *UserEventPtr = InitObject;
+    XLN_Init(&UserEventPtr->UserEventNode);
 }
 X_STATIC_INLINE void XIUE_SetEventProc(XelIoUserEvent * UserEventPtr, XelIoUserEventProc Callback, XelVariable Context) {
     UserEventPtr->UserEventProc = Callback;
