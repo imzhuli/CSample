@@ -91,10 +91,10 @@ static void XTC_EventCallback(XelIoEventBase * IoEventBasePtr, XelIoEventType Io
 		return;
 	}
 	if (IoEventType == XIET_Out) {
-		if (TcpConnectionPtr->_Status == XTCS_Connecting) {
+		if (XTC_IsConnecting(TcpConnectionPtr)) {
 			TcpConnectionPtr->_Status = XTCS_Connected;
 			TcpConnectionPtr->_EventListener.OnConnected(TcpConnectionPtr, TcpConnectionPtr->_EventListener.ContextPtr);
-			if (!XTC_IsConnected(TcpConnectionPtr)) {
+			if (XTC_IsClosed(TcpConnectionPtr)) {
 				X_DbgInfo("ConnectionClosed during connected event callback");
 				return;
 			}

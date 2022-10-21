@@ -21,9 +21,15 @@ X_API X_PRINTF_LIKE(1,2) void X_LogD(const char * fmt, ...);
 X_API X_PRINTF_LIKE(1,2) void X_LogV(const char * fmt, ...);
 
 #ifndef NDEBUG
-#define X_LogDD X_LogD
 #define X_LogDE X_LogE
+#define X_LogDW X_LogW
+#define X_LogDI X_LogI
+#define X_LogDD X_LogD
+#define X_LogDV X_LogV
 #else
-#define X_LogDD(fmt, ...)
 #define X_LogDE(fmt, ...)
+#define X_LogDW(fmt, ...)
+#define X_LogDI(fmt, ...)
+#define X_LogDD(fmt, ...)
+#define X_LogDV(fmt, ...)
 #endif
