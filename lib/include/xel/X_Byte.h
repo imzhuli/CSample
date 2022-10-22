@@ -161,6 +161,9 @@ X_STATIC_INLINE void XSR_Raw(XelStreamReader * CtxPtr, void * DestPtr, size_t Le
 X_STATIC_INLINE void XSR_Skip(XelStreamReader * CtxPtr, ptrdiff_t Length) {
 	CtxPtr->Current += Length;
 }
+X_STATIC_INLINE const void * XSR_Ptr(XelStreamReader * CtxPtr) {
+	return CtxPtr->Current;
+}
 X_STATIC_INLINE ptrdiff_t XSR_Offset(XelStreamReader * CtxPtr) {
 	return (CtxPtr->Current - CtxPtr->Start);
 }
@@ -241,6 +244,9 @@ X_STATIC_INLINE void XSW_Raw(XelStreamWriter * CtxPtr, const void * SourcePtr, s
 }
 X_STATIC_INLINE void XSW_Skip(XelStreamWriter * CtxPtr, ptrdiff_t Length) {
 	CtxPtr->Current += Length;
+}
+X_STATIC_INLINE void * XSW_Ptr(XelStreamWriter * CtxPtr) {
+	return CtxPtr->Current;
 }
 X_STATIC_INLINE ptrdiff_t XSW_Offset(XelStreamWriter * CtxPtr) {
 	return (CtxPtr->Current - CtxPtr->Start);
