@@ -1,6 +1,5 @@
 #include <xel_ext/net/X_IpAddress.h>
 
-
 XelInAddr  XelInAddrZero  = XEL_IN_ADDR_INIT;
 XelIn6Addr XelIn6AddrZero = XEL_IN6_ADDR_INIT;
 
@@ -10,9 +9,6 @@ union XelIpv4Punning
 	XelUByte Raw[4];
 };
 typedef union XelIpv4Punning XelIpv4Punning;
-
-// struct sockaddr_in  Addr4;
-// struct sockaddr_in6 Addr6;
 
 bool X_Ipv4ToStr(XelIpStr * OutputPtr, const XelInAddr * SinAddrPtr)
 {

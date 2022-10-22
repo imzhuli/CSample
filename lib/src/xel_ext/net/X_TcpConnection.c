@@ -157,8 +157,6 @@ bool XTC_InitConnect(XelIoContext * IoContextPtr, XelTcpConnection * TcpConnecti
 		return false;
 	}
 
-	XelInAddr  RemoteSinAddr = XEL_IN_ADDR_INIT;
-	XelIn6Addr RemoteSin6Addr = XEL_IN6_ADDR_INIT;
 	XelIoEventBase * EventBasePtr = &TcpConnectionPtr->_IoEventBase;
 	if (!XIEB_Init(EventBasePtr)) {
 		XWBC_Clean(&TcpConnectionPtr->_WriteBufferChain);
@@ -167,6 +165,8 @@ bool XTC_InitConnect(XelIoContext * IoContextPtr, XelTcpConnection * TcpConnecti
 	}
 
 #if defined (X_SYSTEM_LINUX)
+	XelInAddr  RemoteSinAddr;
+	XelIn6Addr RemoteSin6Addr;
 	if (X_StrToIpv4(&RemoteSinAddr, IpString)) {
 		int Fd = socket(AF_INET, SOCK_STREAM, 0);
 		if (-1 == Fd) {
@@ -239,7 +239,7 @@ void XTC_Close(XelTcpConnection * TcpConnectionPtr)
 	if (TcpConnectionPtr->_Status == XTCS_Closed) {
 		return;
 	}
-	XIEB_Unbind(&TcpConnectionPtr->_IoEventBase);	
+	XIEB_Unbind(&TcpConnectionPtr->_IoEventBase);
 	XIUE_Detach(&TcpConnectionPtr->_ExtraIntenalEventNode);
 	XelCloseSocket(TcpConnectionPtr->_Socket);
 	TcpConnectionPtr->_Socket = XelInvalidSocket;
@@ -261,7 +261,7 @@ size_t XTC_PostData(XelTcpConnection * TcpConnectionPtr, const void * DataPtr_, 
 	assert(TcpConnectionPtr->_Status != XTCS_Closed);
 	XelUByte * DataPtr = (XelUByte *)DataPtr_;
 	XelWriteBufferChain * WriteBufferChainPtr = &TcpConnectionPtr->_WriteBufferChain;
-	if (XIEB_GetWritingMark(&TcpConnectionPtr->_IoEventBase) || !XWBC_IsEmpty(WriteBufferChainPtr)) {		
+	if (XIEB_GetWritingMark(&TcpConnectionPtr->_IoEventBase) || !XWBC_IsEmpty(WriteBufferChainPtr)) {
 		size_t PushSize = XWBC_PushBack(WriteBufferChainPtr, DataPtr, Size);
 		TcpConnectionPtr->_WriteBufferDataSize += PushSize;
 		return PushSize;
@@ -295,7 +295,7 @@ size_t XTC_PostData(XelTcpConnection * TcpConnectionPtr, const void * DataPtr_, 
 	return 0;
 }
 
-// Refs to IoContext 
+// Refs to IoContext
 //
 // typedef void (*XelIoUserEventProc)(XelIoUserEvent * UserEventNodePtr);
 // struct XelIoUserEvent {
