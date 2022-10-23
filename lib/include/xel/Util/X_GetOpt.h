@@ -26,6 +26,6 @@ typedef struct X_LongOption
 } X_LongOption;
 
 X_API int X_GetOpt(int nargc, char *const nargv[], const char *ostr);
-X_API int X_GetOptLong(int nargc, char *nargv[], const char * options, X_LongOption * long_options, int * index);
+X_API int X_GetOptLong(int nargc, char *nargv[], const char * options, const X_LongOption * long_options, int * index);
 
 X_CNAME_END

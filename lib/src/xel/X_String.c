@@ -67,6 +67,12 @@ const char * XS_GetData(XelConstString Str)
     return  RealPtr->DataPtr;
 }
 
+char * XS_GetMutableData(XelString Str)
+{
+    __XelString* RealPtr = (__XelString *)Str;
+    return  RealPtr->DataPtr;
+}
+
 size_t XS_GetLength(XelConstString Str)
 {
     const __XelString* RealPtr = (const __XelString *)Str;

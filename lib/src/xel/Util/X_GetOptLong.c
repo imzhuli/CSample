@@ -120,12 +120,14 @@ static int getopt_internal(int nargc, char * nargv[], const char *ostr)
  * getopt_long --
  *	Parse argc/argv argument vector.
  */
-int X_GetOptLong(int nargc, char *nargv[], const char * options, X_LongOption * long_options, int * index)
+int X_GetOptLong(int nargc, char *nargv[], const char * options, const X_LongOption * long_options, int * index)
 {
 	int retval;
+	if (!options) {
+		options = "";
+	}
 
 	assert(nargv != NULL);
-	assert(options != NULL);
 	assert(long_options != NULL);
 	/* index may be NULL */
 

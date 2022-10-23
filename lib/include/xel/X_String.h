@@ -20,6 +20,7 @@ extern XelString      XS_NewString(const char * StringPtr);
 extern void           XS_Clear(XelString Str);
 extern void           XS_Delete(XelString Str);
 extern const char *   XS_GetData(XelConstString Str);
+extern char *         XS_GetMutableData(XelString Str);
 extern size_t         XS_GetLength(XelConstString Str);
 extern void           XS_SetData(XelString Str, const char * SourcePtr, size_t Length);
 extern void           XS_SetString(XelString Str, const char * StringPtr);
