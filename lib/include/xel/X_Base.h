@@ -264,7 +264,7 @@ struct XelBufferView
 #ifndef NDEBUG
 #define X_DEBUG_PRINTF printf
 #else
-#define X_DEBUG_PRINTF(...)
+#define X_DEBUG_PRINTF(...) X_Pass()
 #endif
 
 X_CNAME_END

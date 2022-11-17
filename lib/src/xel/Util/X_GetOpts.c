@@ -81,7 +81,7 @@ int X_GetOpt(int nargc, char *const nargv[], const char *ostr)
         if (!*place)
             ++X_OptInd;
         if (X_OptErr && *ostr != ':')
-            (void)X_DEBUG_PRINTF("illegal option -- %c\n", X_OptOpt);
+            X_DEBUG_PRINTF("illegal option -- %c\n", X_OptOpt);
         return (BADCH);
     }
     if (*++oli != ':')
@@ -100,7 +100,7 @@ int X_GetOpt(int nargc, char *const nargv[], const char *ostr)
             if (*ostr == ':')
                 return (BADARG);
             if (X_OptErr)
-                (void)X_DEBUG_PRINTF("option requires an argument -- %c\n", X_OptOpt);
+                X_DEBUG_PRINTF("option requires an argument -- %c\n", X_OptOpt);
             return (BADCH);
         }
         else /* white space */
