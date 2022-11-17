@@ -261,4 +261,10 @@ struct XelBufferView
 
 #define XEL_HANDLE struct{void*__PlaceHolder__;}*
 
+#ifndef NDEBUG
+#define X_DEBUG_PRINTF printf
+#else
+#define X_DEBUG_PRINTF(...)
+#endif
+
 X_CNAME_END

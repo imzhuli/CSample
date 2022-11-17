@@ -150,7 +150,7 @@ static void XIR_IniSort(__IniContent__ * vhIni)
     __IniFileLine__ * vhReplaceLine = vhLine + 1;
     __IniFileLine__ * vhEndLine = vhLine + vhIni->xLineCount;
 
-    // printf("original line count=%d\n", (int)vhIni->xLineCount);
+    // X_DEBUG_PRINTF("original line count=%d\n", (int)vhIni->xLineCount);
     while(vhReplaceLine < vhEndLine) {
         if (!strcmp(vhLine->hKeyStart, vhReplaceLine->hKeyStart)) {
             *vhLine = *(vhReplaceLine++);
