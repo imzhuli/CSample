@@ -272,6 +272,7 @@ size_t XTC_PostData(XelTcpConnection * TcpConnectionPtr, const void * DataPtr_, 
 	X_DbgInfo("SendData: %zi", (size_t)WB);
 	if (WB < 0) {
         if (errno != EAGAIN) {
+			X_DbgInfo("SendError: %s", strerror(errno));
 			XTC_Close(TcpConnectionPtr);
 			return (size_t)(-1);
 		}
