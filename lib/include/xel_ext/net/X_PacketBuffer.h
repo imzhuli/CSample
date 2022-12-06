@@ -122,6 +122,7 @@ X_STATIC_INLINE size_t XWBC_PushBack(XelWriteBufferChain * ChainPtr, const void 
         if (!NewWriteBuffer) {
             return PushTotal;
         }
+        XWB_Init(NewWriteBuffer);
         size_t PushOnceSize = XWB_PushBack(NewWriteBuffer, DataPtr, Size);
         DataPtr += PushOnceSize;
         Size -= PushOnceSize;
