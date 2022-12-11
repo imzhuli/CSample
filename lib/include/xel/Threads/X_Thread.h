@@ -106,6 +106,7 @@ typedef struct XelAutoResetEvent XelAutoResetEvent;
 X_API bool X_InitAutoResetEvent(XelAutoResetEvent * EventPtr);
 X_API void X_CleanAutoResetEvent(XelAutoResetEvent * EventPtr);
 X_API void X_WaitForAutoResetEventAndLock(XelAutoResetEvent * EventPtr);
+X_API bool X_TryWaitForAutoResetEventAndLock(XelAutoResetEvent * EventPtr, uint64_t TimeoutMS);
 X_API void X_UnlockAutoResetEvent(XelAutoResetEvent * EventPtr);
 X_API void X_PrepareAutoResetEvent(XelAutoResetEvent * EventPtr);
 X_API void X_CancelAutoResetEvent(XelAutoResetEvent * EventPtr);

@@ -16,7 +16,7 @@ static XelThreadRoutineWrapper * XTRW_New(XelThreadRoutine Routine, void * Conte
     return WrapperPtr;
 }
 
-static void XTRW_Delete(XelThreadRoutineWrapper * WrapperPtr) 
+static void XTRW_Delete(XelThreadRoutineWrapper * WrapperPtr)
 {
     free(WrapperPtr);
 }
@@ -80,7 +80,7 @@ void X_LockMutex(XelMutex * MutexPtr)
 bool X_TryLockMutex(XelMutex * MutexPtr)
 {
     return TryEnterCriticalSection(&MutexPtr->_CriticalSection);
-}   
+}
 
 void X_UnlockMutex(XelMutex * MutexPtr)
 {
@@ -113,8 +113,26 @@ void X_WaitForConditionalVariable(XelConditionalVariable * CondPtr, XelMutex * M
     SleepConditionVariableCS(&CondPtr->_CondVar, &MutexPtr->_CriticalSection, INFINITE);
 }
 
+void X_TryWaitForConditionalVariable(XelConditionalVariable * CondPtr, XelMutex * MutexPtr, uint64_t TimeoutMS)
+{
+    SleepConditionVariableCS(&CondPtr->_CondVar, &MutexPtr->_CriticalSection, TimeoutMS);
+}
+
 #elif defined(X_SYSTEM_LINUX) || defined(X_SYSTEM_MACOS) || defined(X_SYSTEM_IOS)
 #include <time.h>
+
+static uint64_t tm_to_ns(struct timespec tm)
+{
+    return (uint64_t)tm.tv_sec * 1000000000 + (uint64_t)tm.tv_nsec;
+}
+
+static struct timespec ns_to_tm(uint64_t ns)
+{
+    struct timespec tm;
+    tm.tv_sec = ns / 1000000000;
+    tm.tv_nsec = ns - (tm.tv_sec * 1000000000);
+    return tm;
+}
 
 static void * X_ThreadWrapperProc(void* ContextPtr)
 {
@@ -182,27 +200,27 @@ void X_LockMutex(XelMutex * MutexPtr)
                     "\t2. The mutex was created with the protocol attribute having the value PTHREAD_PRIO_PROTECT and the calling thread's priority is higher than the mutex's current priority ceiling"
                     );
                 break;
-            case EAGAIN: 
+            case EAGAIN:
                 X_DbgError(
-                    "pthread_mutex_lock failed (EAGAIN), possible reasons are: \n%s", 
+                    "pthread_mutex_lock failed (EAGAIN), possible reasons are: \n%s",
                     "\tThe mutex could not be acquired because the maximum number of recursive locks for mutex has been exceeded."
                     );
                 break;
             case ENOTRECOVERABLE:
                 X_DbgError(
-                    "pthread_mutex_lock failed (ENOTRECOVERABLE), possible reasons are: \n%s", 
+                    "pthread_mutex_lock failed (ENOTRECOVERABLE), possible reasons are: \n%s",
                     "\tThe state protected by the mutex is not recoverable."
                     );
                 break;
             case EOWNERDEAD:
                 X_DbgError(
-                    "pthread_mutex_lock failed (EBUSY), possible reasons are: \n%s", 
+                    "pthread_mutex_lock failed (EBUSY), possible reasons are: \n%s",
                     "\tThe mutex is a robust mutex and the previous owning thread terminated while holding the mutex lock. The mutex lock shall be acquired by the calling thread and it is up to the new owner to make the state consistent."
                     );
                 break;
             case EDEADLK:
                 X_DbgError(
-                    "pthread_mutex_lock failed (EDEADLK), possible reasons are: \n%s", 
+                    "pthread_mutex_lock failed (EDEADLK), possible reasons are: \n%s",
                     "\t1. The mutex type is PTHREAD_MUTEX_ERRORCHECK and the current thread already owns the mutex.\n"
                     "\t2. A deadlock condition was detected."
                     );
@@ -221,9 +239,9 @@ bool X_TryLockMutex(XelMutex * MutexPtr)
         switch (Result) {
             case EBUSY:
                 return false;
-            case EAGAIN: 
+            case EAGAIN:
                 X_DbgError(
-                    "pthread_mutex_trylock failed (EAGAIN), possible reasons are: \n%s", 
+                    "pthread_mutex_trylock failed (EAGAIN), possible reasons are: \n%s",
                     "\tThe mutex could not be acquired because the maximum number of recursive locks for mutex has been exceeded."
                     );
                     break;
@@ -236,13 +254,13 @@ bool X_TryLockMutex(XelMutex * MutexPtr)
                     break;
             case ENOTRECOVERABLE:
                 X_DbgError(
-                    "pthread_mutex_trylock failed (ENOTRECOVERABLE), possible reasons are: \n%s", 
+                    "pthread_mutex_trylock failed (ENOTRECOVERABLE), possible reasons are: \n%s",
                     "\tThe state protected by the mutex is not recoverable."
                     );
                     break;
             case EOWNERDEAD:
                 X_DbgError(
-                    "pthread_mutex_trylock failed (EBUSY), possible reasons are: \n%s", 
+                    "pthread_mutex_trylock failed (EBUSY), possible reasons are: \n%s",
                     "\tThe mutex is a robust mutex and the previous owning thread terminated while holding the mutex lock. The mutex lock shall be acquired by the calling thread and it is up to the new owner to make the state consistent."
                     );
                     break;
@@ -279,7 +297,7 @@ bool X_InitConditionalVariable(XelConditionalVariable * CondPtr)
 }
 
 void X_CleanConditionalVariable(XelConditionalVariable * CondPtr)
-{ 
+{
     pthread_cond_destroy(&CondPtr->_CondVar);
 }
 
@@ -297,6 +315,16 @@ void X_WaitForConditionalVariable(XelConditionalVariable * CondPtr, XelMutex * M
 {
     X_RuntimeAssert(0 == pthread_cond_wait(&CondPtr->_CondVar, &MutexPtr->_Mutex), "The value cond & mutex should refer to valid object, correctly owned.");
 }
+
+bool X_TryWaitForConditionalVariable(XelConditionalVariable * CondPtr, XelMutex * MutexPtr, uint64_t TimeoutMS)
+{
+    struct timespec start_tm;
+    struct timespec end_tm;
+	clock_gettime(CLOCK_REALTIME, &start_tm);
+	end_tm = ns_to_tm(tm_to_ns(start_tm) + TimeoutMS *1000000);
+    return 0 == pthread_cond_timedwait(&CondPtr->_CondVar, &MutexPtr->_Mutex, &end_tm);
+}
+
 
 #endif
 
@@ -383,6 +411,12 @@ void X_WaitForAutoResetEventAndLock(XelAutoResetEvent * EventPtr)
     while (!EventPtr->_HasEvent) {
         X_WaitForConditionalVariable(&EventPtr->_CondVar, &EventPtr->_Mutex);
     }
+}
+
+bool X_TryWaitForAutoResetEventAndLock(XelAutoResetEvent * EventPtr, uint64_t TimeoutMS)
+{
+    X_LockMutex(&EventPtr->_Mutex);
+    return X_TryWaitForConditionalVariable(&EventPtr->_CondVar, &EventPtr->_Mutex, TimeoutMS) && EventPtr->_HasEvent;
 }
 
 void X_UnlockAutoResetEvent(XelAutoResetEvent * EventPtr)
