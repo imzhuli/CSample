@@ -4,7 +4,7 @@
 
 XelVariable XEL_VARIABLE_NONE = XEL_VARIABLE_INIT;
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) && defined(X_DEBUG_VERBOSE)
 void X_DbgInfo(const char * fmt, ...)
 {
 	va_list va;
