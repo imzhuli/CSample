@@ -103,6 +103,7 @@ X_STATIC_INLINE void XWBC_AppendBuffer(XelWriteBufferChain * ChainPtr, XelWriteB
     if (!ChainPtr->FirstPtr) {
         ChainPtr->LastPtr = ChainPtr->FirstPtr = BufferPtr;
     } else {
+        ChainPtr->LastPtr->NextPtr = BufferPtr;
         ChainPtr->LastPtr = BufferPtr;
     }
 }
@@ -120,6 +121,7 @@ X_STATIC_INLINE size_t XWBC_PushBack(XelWriteBufferChain * ChainPtr, const void 
     while(Size) {
         XelWriteBuffer * NewWriteBuffer = XWBC_Alloc(ChainPtr);
         if (!NewWriteBuffer) {
+            X_DbgError("Failed to alloc new wirte buffer");
             return PushTotal;
         }
         XWB_Init(NewWriteBuffer);

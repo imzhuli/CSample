@@ -11,13 +11,16 @@
 
 static void XTC_FlushData(XelTcpConnection * TcpConnectionPtr)
 {
+	X_DbgInfo("XTC_FlushData");
     assert(TcpConnectionPtr->_Status == XTCS_Connected);
     XelWriteBufferChain * ChainPtr = &TcpConnectionPtr->_WriteBufferChain;
 	while(true) {
 		XelWriteBuffer * BufferPtr = XWBC_Peek(ChainPtr);
 		if (!BufferPtr) {
+			X_DbgInfo("SendBufferCleared");
 			return;
 		}
+		X_DbgInfo("TryFlushData: %p: BufferSize=%zi", BufferPtr, BufferPtr->BufferDataSize);
 		ssize_t WB = send(TcpConnectionPtr->_Socket, BufferPtr->Buffer, (send_len_t)BufferPtr->BufferDataSize, XelNoWriteSignal);
 		X_DbgInfo("SendData: socket=%i, size=%zi", TcpConnectionPtr->_Socket, (size_t)WB);
 		if (WB == BufferPtr->BufferDataSize) {
@@ -38,6 +41,7 @@ static void XTC_FlushData(XelTcpConnection * TcpConnectionPtr)
 			BufferPtr->BufferDataSize -= WB;
 			memmove(BufferPtr->Buffer, BufferPtr->Buffer + WB, BufferPtr->BufferDataSize);
 			TcpConnectionPtr->_WriteBufferDataSize -= WB;
+			X_DbgInfo("FlushData pending: %p: NewDataSize= %zi", BufferPtr, BufferPtr->BufferDataSize);
 			break;
 		}
 	}
@@ -49,7 +53,6 @@ static void XTC_EventCallback(XelIoEventBase * IoEventBasePtr, XelIoEventType Io
 
 #if defined (X_SYSTEM_LINUX)
 	if (IoEventType == XIET_In) {
-		X_DbgInfo("IoEventIn");
 		while(true) {
 			XelUByte * BufferPtr = TcpConnectionPtr->_ReadBuffer + TcpConnectionPtr->_ReadDataSize;
 			size_t SpaceSize = sizeof(TcpConnectionPtr->_ReadBuffer) - TcpConnectionPtr->_ReadDataSize;
@@ -264,6 +267,7 @@ size_t XTC_PostData(XelTcpConnection * TcpConnectionPtr, const void * DataPtr_, 
 	if (XIEB_GetWritingMark(&TcpConnectionPtr->_IoEventBase) || !XWBC_IsEmpty(WriteBufferChainPtr)) {
 		size_t PushSize = XWBC_PushBack(WriteBufferChainPtr, DataPtr, Size);
 		TcpConnectionPtr->_WriteBufferDataSize += PushSize;
+		X_DbgInfo("NoWriteMark: direct push, size=%zi", PushSize);
 		return PushSize;
 	}
 	// send
@@ -287,6 +291,7 @@ size_t XTC_PostData(XelTcpConnection * TcpConnectionPtr, const void * DataPtr_, 
 		size_t PushSize = XWBC_PushBack(WriteBufferChainPtr, DataPtr, Size);
 		TcpConnectionPtr->_WriteBufferDataSize += PushSize;
 		size_t Total = (size_t)WB + PushSize;
+		X_DbgInfo("PushSize: %zi", PushSize);
 		return Total;
 	}
 	return WB;
