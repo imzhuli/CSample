@@ -239,7 +239,7 @@ X_STATIC_INLINE void X_Pass() {}
 X_API X_PRINTF_LIKE(1, 2) void X_FatalAbort(const char * fmt, ...);
 
 // #if !defined(NDEBUG) && defined(X_DEBUG_VERBOSE)
-#if !defined(NDEBUG)
+#if !defined(NDEBUG) && defined(X_DEBUG_VERBOSE)
 	X_API X_PRINTF_LIKE(1,2) void X_DbgInfo(const char * fmt, ...);
 	X_API X_PRINTF_LIKE(1,2) void X_DbgError(const char * fmt, ...);
 #else
