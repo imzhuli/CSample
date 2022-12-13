@@ -20,7 +20,7 @@ static void XTC_FlushData(XelTcpConnection * TcpConnectionPtr)
 			X_DbgInfo("SendBufferCleared");
 			return;
 		}
-		X_DbgInfo("TryFlushData: %p: BufferSize=%zi", BufferPtr, BufferPtr->BufferDataSize);
+		X_DbgInfo("TryFlushData: %p: BufferSize=%zi, remain=%zi", BufferPtr, BufferPtr->BufferDataSize, TcpConnectionPtr->_WriteBufferDataSize);
 		ssize_t WB = send(TcpConnectionPtr->_Socket, BufferPtr->Buffer, (send_len_t)BufferPtr->BufferDataSize, XelNoWriteSignal);
 		X_DbgInfo("SendData: socket=%i, size=%zi", TcpConnectionPtr->_Socket, (size_t)WB);
 		if (WB == BufferPtr->BufferDataSize) {
@@ -261,13 +261,15 @@ void XTC_Clean(XelTcpConnection * TcpConnectionPtr)
 
 size_t XTC_PostData(XelTcpConnection * TcpConnectionPtr, const void * DataPtr_, size_t Size)
 {
-	assert(TcpConnectionPtr->_Status != XTCS_Closed);
+	if (TcpConnectionPtr->_Status == XTCS_Closed) {
+		return 0;
+	}
 	XelUByte * DataPtr = (XelUByte *)DataPtr_;
 	XelWriteBufferChain * WriteBufferChainPtr = &TcpConnectionPtr->_WriteBufferChain;
 	if (XIEB_GetWritingMark(&TcpConnectionPtr->_IoEventBase) || !XWBC_IsEmpty(WriteBufferChainPtr)) {
 		size_t PushSize = XWBC_PushBack(WriteBufferChainPtr, DataPtr, Size);
 		TcpConnectionPtr->_WriteBufferDataSize += PushSize;
-		X_DbgInfo("NoWriteMark: direct push, size=%zi", PushSize);
+		X_DbgInfo("NoWriteMark: direct push, size=%zi, remain=%zi", PushSize, TcpConnectionPtr->_WriteBufferDataSize);
 		return PushSize;
 	}
 	// send
@@ -291,7 +293,7 @@ size_t XTC_PostData(XelTcpConnection * TcpConnectionPtr, const void * DataPtr_, 
 		size_t PushSize = XWBC_PushBack(WriteBufferChainPtr, DataPtr, Size);
 		TcpConnectionPtr->_WriteBufferDataSize += PushSize;
 		size_t Total = (size_t)WB + PushSize;
-		X_DbgInfo("PushSize: %zi", PushSize);
+		X_DbgInfo("PushSize: %zi, remain=%zi", PushSize, TcpConnectionPtr->_WriteBufferDataSize);
 		return Total;
 	}
 	return WB;
