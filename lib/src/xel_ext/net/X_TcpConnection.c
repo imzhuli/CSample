@@ -11,7 +11,7 @@
 
 static void XTC_FlushData(XelTcpConnection * TcpConnectionPtr)
 {
-	X_DbgInfo("XTC_FlushData");
+	X_DbgInfo("XTC_FlushData, ConnectionPtr=%p", TcpConnectionPtr);
     assert(TcpConnectionPtr->_Status == XTCS_Connected);
     XelWriteBufferChain * ChainPtr = &TcpConnectionPtr->_WriteBufferChain;
 	while(true) {
@@ -24,6 +24,7 @@ static void XTC_FlushData(XelTcpConnection * TcpConnectionPtr)
 		ssize_t WB = send(TcpConnectionPtr->_Socket, BufferPtr->Buffer, (send_len_t)BufferPtr->BufferDataSize, XelNoWriteSignal);
 		X_DbgInfo("SendData: socket=%i, size=%zi", TcpConnectionPtr->_Socket, (size_t)WB);
 		if (WB == BufferPtr->BufferDataSize) {
+			TcpConnectionPtr->_WriteBufferDataSize -= WB;
 			XWBC_FreeFront(ChainPtr);
 			continue;
 		}
