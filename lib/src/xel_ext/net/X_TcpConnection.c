@@ -43,6 +43,7 @@ static void XTC_FlushData(XelTcpConnection * TcpConnectionPtr)
 			memmove(BufferPtr->Buffer, BufferPtr->Buffer + WB, BufferPtr->BufferDataSize);
 			TcpConnectionPtr->_WriteBufferDataSize -= WB;
 			X_DbgInfo("FlushData pending: %p: NewDataSize= %zi", BufferPtr, BufferPtr->BufferDataSize);
+			XIEB_MarkWriting(&TcpConnectionPtr->_IoEventBase);
 			break;
 		}
 	}
@@ -149,7 +150,7 @@ static void XTC_SetEventListener(XelTcpConnection * TcpConnectionPtr, const XelT
 	}
 }
 
-bool XTC_InitConnect(XelIoContext * IoContextPtr, XelTcpConnection * TcpConnectionPtr, const char * IpString, uint16_t Port, const XelTcpConnectionListener * ListenerPtr)
+bool XTC_InitConnect(XelIoContext * IoContextPtr, XelTcpConnection * TcpConnectionPtr, const char * IpString, uint16_t Port, const XelTcpConnectionListener * ListenerPtr, bool StartReading)
 {
 	TcpConnectionPtr->_Socket = XelInvalidSocket;
 	TcpConnectionPtr->_Status = XTCS_Closed;
@@ -213,7 +214,9 @@ bool XTC_InitConnect(XelIoContext * IoContextPtr, XelTcpConnection * TcpConnecti
 			XIUE_Clean(&TcpConnectionPtr->_ExtraIntenalEventNode);
 			return false;
 		}
-		XIEB_ResumeReading(EventBasePtr);
+		if (StartReading) {
+			XIEB_ResumeReading(EventBasePtr);
+		}
 	}
 	else if (X_StrToIpv6(&RemoteSin6Addr, IpString)) {
 		XIEB_Clean(EventBasePtr);

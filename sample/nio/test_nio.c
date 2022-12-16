@@ -26,7 +26,7 @@ XelTcpConnectionListener Listener =
 int main(int argc, char * argv[])
 {
 	X_RTA(XIC_Init(&IoContext));
-	X_RTA(XTC_InitConnect(&IoContext, &TcpConnection, "14.215.177.38", 80, &Listener));
+	X_RTA(XTC_InitConnect(&IoContext, &TcpConnection, "14.215.177.38", 80, &Listener, true));
 
 	XTC_PostData(&TcpConnection, HttpRequest, strlen(HttpRequest));
 
