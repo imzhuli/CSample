@@ -32,7 +32,11 @@
     typedef size_t                     recv_len_t;
     typedef int                        XelEventPoller;        // epoll
     #define XelInvalidEventPoller      ((XelEventPoller)-1)
+#ifdef X_SYSTEM_ANDROID
+    typedef uint32_t                   XelNativeEventType;
+#else
     typedef enum EPOLL_EVENTS          XelNativeEventType;    // EPOLLIN EPOLLOUT EPOLLERR ...
+#endif
     typedef int XelSocket;
     #define XelInvalidSocket           ((XelSocket)-1)
     #define XelCloseSocket(sockfd)     close((sockfd))

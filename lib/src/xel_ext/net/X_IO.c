@@ -12,7 +12,11 @@ bool XIC_Init(XelIoContext * ContextPtr)
 {
     XelIoContext InitValue = { .EventPoller = XelInvalidEventPoller,  .Reserved = {0} };
     #if defined(X_SYSTEM_LINUX)
+    #ifdef X_SYSTEM_ANDROID
+        XelEventPoller Epoll = epoll_create(128);
+    #else
         XelEventPoller Epoll = epoll_create1(EPOLL_CLOEXEC);
+    #endif
         if (Epoll == -1) {
             *ContextPtr = InitValue;
             return false;
